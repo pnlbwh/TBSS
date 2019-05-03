@@ -1,0 +1,165 @@
+# ===============================================================================
+# tbss (2019) pipeline is written by-
+#
+# TASHRIF BILLAH
+# Brigham and Women's Hospital/Harvard Medical School
+# tbillah@bwh.harvard.edu
+#
+# ===============================================================================
+# See details at https://github.com/pnlbwh/tbss
+# Submit issues at https://github.com/pnlbwh/tbss/issues
+# View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
+# ===============================================================================
+
+from tbssUtil import load, ConfigParser, FILEDIR, pjoin
+import numpy as np
+from conversion import parse_labels, num2str
+import pandas as pd
+from multiprocessing import Pool
+
+config = ConfigParser()
+config.read(pjoin(FILEDIR,'config.ini'))
+N_CPU = int(config['DEFAULT']['N_CPU'])
+
+
+def average_labels(labels):
+
+    commonLabels=[]
+
+    for label in labels:
+
+        labelSplit= label.lower().split('-')
+        prefix= labelSplit[0]
+        suffix= labelSplit[-1]
+
+        if suffix=='l' or suffix=='r':
+            commonName= label[-2: ]
+        elif suffix=='left':
+            commonName= label[-5: ]
+        elif suffix == 'right':
+            commonName = label[-6:]
+        elif prefix=='l' or prefix=='r':
+            commonName= label[2: ]
+        elif prefix=='left':
+            commonName= label[5: ]
+        elif prefix == 'right':
+            commonName = label[6:]
+        else:
+            commonName= label
+
+        commonLabels.append(commonName)
+
+    return np.unique(commonLabels)
+
+
+def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDir, avgFlag):
+
+    print('Creating ROI based statistics for', imgPath)
+    img= load(imgPath).get_data()
+
+    df= pd.DataFrame(columns= ['Tracts','Average','nVoxels'])
+    df.loc[0]= [f'average{modality}']+ [num2str(x) for x in [img[img>0].mean(), len(np.where(img>0)[0])]]
+
+    stat_file= pjoin(roiDir, f'{c}_{modality}_roi.csv')
+    avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
+
+    for i ,intLabel in enumerate(label2name.keys()):
+        roi = labelMap == int(intLabel)
+        _roi = np.where(roi>0)
+
+        img_roi= img*roi
+
+        df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [img_roi[_roi].mean(), len(_roi[0])]]
+
+
+    df.set_index('Tracts').to_csv(stat_file)
+    print('Made ', stat_file)
+
+
+    if avgFlag:
+
+        df_avg = pd.DataFrame(columns=['Tracts', 'Average', 'nVoxels'])
+        df_avg.loc[0] = df.loc[0].copy()
+
+        row= 1
+        for common in commonLabels:
+
+            dm=[]
+            num=[]
+
+            for i, label in enumerate(label2name.values()):
+                if common in label:
+
+                    df_avg.loc[row]= df.loc[i+1].copy() # Right or Left value
+                    dm.append(float(df.loc[i+1][1]))
+                    num.append(int(df.loc[i+1][2]))
+
+                    # since we are averaging over R/L only, ind <= 2
+                    if len(dm)==2:
+                        row= row+1
+                        # average of R/L
+                        df_avg.loc[row] = [common, num2str(np.mean(dm)), str(int(np.mean(num)))]
+                        break
+
+                    row+=1
+
+            row+=1
+
+
+        df_avg.set_index('Tracts').to_csv(avg_stat_file)
+        print('Made ', avg_stat_file)
+
+
+def roi_analysis(imgs, cases, modality, labelMapFile, lut, modDir, roiDir, avgFlag):
+
+    labelMap = load(labelMapFile).get_data()
+    intLabels = np.unique(labelMap)[1:]
+    label2name = parse_labels(intLabels, lut)
+    commonLabels= average_labels(label2name.values())
+
+
+    pool= Pool(N_CPU)
+    for c, imgPath in zip(cases, imgs):
+
+        # subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDir, avgFlag)
+        pool.apply_async(func= subject_stat, args= (imgPath, c, modality, label2name, commonLabels, labelMap,
+                                                    roiDir, avgFlag))
+
+    pool.close()
+    pool.join()
+
+
+    # combine csvs
+    # stat_file= pjoin(roiDir, f'{c}_{modality}_roi.csv')
+    # avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
+    # read one stat_file, obtain headers
+    df= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{modality}_roi.csv'))
+    df_comb= pd.DataFrame(columns= np.append('Cases', df['Tracts'].values))
+
+    for i, c in enumerate(cases):
+        df= pd.read_csv(pjoin(roiDir, f'{c}_{modality}_roi.csv'))
+        # num2str() text formatting is for precision control
+        df_comb.loc[i]= np.append(c, np.array([num2str(x) for x in df['Average'].values]))
+
+    combined_stat= pjoin(modDir, f'{modality}_combined_roi.csv')
+    df_comb.set_index('Cases').to_csv(combined_stat)
+    print('Made ', combined_stat)
+
+    if avgFlag:
+        # read one avg_stat_file, obtain headers
+        df_avg= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{modality}_roi_avg.csv'))
+        df_avg_comb= pd.DataFrame(columns= np.append('Cases', df_avg['Tracts'].values))
+
+        for i, c in enumerate(cases):
+            df = pd.read_csv(pjoin(roiDir, f'{c}_{modality}_roi_avg.csv'))
+            # num2str() text formatting is for precision control
+            df_avg_comb.loc[i] = np.append(c, np.array([num2str(x) for x in df['Average'].values]))
+
+        combined_avg_stat= pjoin(modDir, f'{modality}_combined_roi_avg.csv')
+        df_avg_comb.set_index('Cases').to_csv(combined_avg_stat)
+        print('Made ', combined_avg_stat)
+
+
+if __name__=='__main__':
+
+    pass
