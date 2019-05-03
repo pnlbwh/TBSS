@@ -123,9 +123,15 @@ def main():
                         help= 'number of processes/threads to use (-1 for all available, may slow down your system)', default= 4)
 
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
-
+    
     args = parser.parse_args()
 
+    # argument sanity check
+    if not args.template and args.templateMask:
+        raise AttributeError('--templateMask is invalid w/o --template')
+
+    if not args.skeleton and (args.skeletonMask or args.skeletonMaskDst):
+        raise AttributeError('--skeletonMask and/or skeletonMaskDst is invalid w/o --skeleton')
 
     # write config file ====================================================================================
     if args.ncpu==-1:
