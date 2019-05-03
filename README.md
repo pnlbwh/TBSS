@@ -1,8 +1,9 @@
 ![](doc/pnl-bwh-hms.png)
 
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.2584275.svg)](https://doi.org/10.5281/zenodo.2584275) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.2662497.svg)](https://doi.org/10.5281/zenodo.2662497) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
 
 *TBSS* repository is developed by Tashrif Billah, Sylvain Bouix, and Ofer Pasternak, Brigham and Women's Hospital (Harvard Medical School).
+
 
 
 Table of Contents
@@ -74,7 +75,7 @@ A standard template can be used as well.
 If this repository is useful in your research, please cite as below: 
 
 Billah, Tashrif; Bouix, Sylvain; Pasternak, Ofer; Generalized Tract Based Spatial Statistics (TBSS) pipeline,
-https://github.com/pnlbwh/tbss, 2019, DOI: https://doi.org/10.5281/zenodo.2584275
+https://github.com/pnlbwh/tbss, 2019, DOI: https://doi.org/10.5281/zenodo.2662497
 
 
 
