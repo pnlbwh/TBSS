@@ -17,6 +17,39 @@ import numpy as np
 SKEL_THRESH= str(0.1)
 SEARCH_RULE_MASK= pjoin(environ['FSLDIR'], 'data', 'standard', 'LowerCingulum_1mm.nii.gz')
 
+
+def _create_skeleton(meanFA, skeleton):
+    # create skeleton
+    check_call((' ').join(['tbss_skeleton',
+                          '-i', meanFA,
+                          '-o', skeleton]),
+                          shell= True)
+
+
+def _create_skeletonMask(skeleton, SKEL_THRESH, skeletonMask):
+    # create skeletonMask
+    check_call((' ').join(['fslmaths',
+                          skeleton, '-thr',
+                          SKEL_THRESH, '-bin',
+                          skeletonMask]),
+                          shell= True)
+
+
+def _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst):
+    # create skeletonMaskDst
+    check_call((' ').join(['fslmaths',
+                          meanFAmask, '-mul', '-1',
+                          '-add', '1',
+                          '-add', skeletonMask,
+                          skeletonMaskDst]),
+                          shell= True)
+
+    check_call((' ').join(['distancemap',
+                          '-i', skeletonMaskDst,
+                          '-o', skeletonMaskDst]),
+                          shell=True)
+
+
 def skeletonize(imgs, cases, modality, template, templateMask,
                 skeleton, skeletonMask, skeletonMaskDst, outDir, skelDir, ANTS):
 
@@ -33,7 +66,7 @@ def skeletonize(imgs, cases, modality, template, templateMask,
     meanFAdata = allFA.mean(0)
     meanFA = pjoin(outDir, 'mean_FA.nii.gz')
 
-    # outdir should contain
+    # outDir should contain
     # all_{modality}.nii.gz
     # mean_FA.nii.gz
     # mean_FA_mask.nii.gz
@@ -44,7 +77,10 @@ def skeletonize(imgs, cases, modality, template, templateMask,
 
     if modality=='FA':
 
+        # TODO
+        # is the templateMask logic right?
         if not templateMask:
+            print('Creating template mask ...')
             meanFAmask= pjoin(outDir, 'mean_FA_mask.nii.gz')
             meanFAmaskData = (meanFAdata > 0) * 1
             save_nifti(meanFAmask, meanFAmaskData.astype('uint8'), target.affine, target.header)
@@ -53,38 +89,51 @@ def skeletonize(imgs, cases, modality, template, templateMask,
             meanFAdata = meanFAdata * meanFAmaskData
             save_nifti(meanFA, meanFAdata, target.affine, target.header)
 
+        else:
+            meanFAmask= templateMask
+
+        # if skeleton is not given:
+        #     create all three of skeleton, skeletonMask, and skeletonMaskDst
+
+        # if skeleton is given and (neither skeletonMask nor skeletonMaskDst is given):
+        #     create skeletonMask and skeletonMaskDst
+
+        # if skeleton and skeletonMask is given and skeletonMaskDst is not given:
+        #     create skeletonMaskDst
 
 
         if not skeleton:
-            # create all three of skeleton, skeletonMask, and skeletonMaskDst
+            print('Creating all three of skeleton, skeletonMask, and skeletonMaskDst ...')
             skeleton= pjoin(outDir, 'mean_FA_skeleton.nii.gz')
             skeletonMask = pjoin(outDir, 'mean_FA_skeleton_mask.nii.gz')
             skeletonMaskDst= pjoin(outDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
-            check_call((' ').join(['tbss_skeleton',
-                                  '-i', pjoin(outDir, 'mean_FA.nii.gz'),
-                                  '-o', skeleton]),
-                                  shell= True)
-
-            # this way we wouldn't have to load the data in python
-            check_call((' ').join(['fslmaths',
-                                  skeleton, '-thr',
-                                  SKEL_THRESH, '-bin',
-                                  skeletonMask]),
-                                  shell= True)
-
-            check_call((' ').join(['fslmaths',
-                                  meanFAmask, '-mul', '-1',
-                                  '-add', '1',
-                                  '-add', skeletonMask,
-                                  skeletonMaskDst]),
-                                  shell= True)
+            _create_skeleton(meanFA, skeleton)
 
 
-            check_call((' ').join(['distancemap',
-                                  '-i', skeletonMaskDst,
-                                  '-o', skeletonMaskDst]),
-                                  shell=True)
+        if skeleton and not (skeletonMask or skeletonMaskDst):
+            print('Creating skeletonMask and skeletonMaskDst ...')
+            skeletonMask = pjoin(outDir, 'mean_FA_skeleton_mask.nii.gz')
+            skeletonMaskDst= pjoin(outDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+
+            _create_skeletonMask(skeleton, SKEL_THRESH, skeletonMask)
+            _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst)
+
+
+        if skeleton and not skeletonMask and skeletonMaskDst:
+            print('Creating skeletonMask ...')
+            skeletonMask = pjoin(outDir, 'mean_FA_skeleton_mask.nii.gz')
+
+            _create_skeletonMask(skeleton, SKEL_THRESH, skeletonMask)
+
+
+        if (skeleton and skeletonMask) and not skeletonMaskDst:
+            print('Creating skeletonMaskDst ...')
+            skeletonMaskDst = pjoin(outDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+
+            _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst)
+
+
 
     '''
     Part of FSL (ID: 5.0.11)
@@ -116,6 +165,7 @@ def skeletonize(imgs, cases, modality, template, templateMask,
     # projecting all {modality} data onto skeleton
     for c, imgPath in zip(cases, imgs):
 
+        print(f'projecting {imgPath} on skeleton ...')
         modImgSkel = pjoin(skelDir, f'{c}_{modality}_to_target_skel.nii.gz')
 
         if modality != 'FA':
