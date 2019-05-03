@@ -7,45 +7,36 @@
 
 Table of Contents
 =================
-
+    
    * [Table of Contents](#table-of-contents)
-   * [Multi-site dMRI harmonization](#multi-site-dmri-harmonization)
+   * [Introduction](#introduction)
+      * [1. ANTs template](#1-ants-template)
+      * [2. Enigma/IIT](#2-enigmaiit)
    * [Citation](#citation)
    * [Dependencies](#dependencies)
    * [Installation](#installation)
       * [1. Install prerequisites](#1-install-prerequisites)
          * [Check system architecture](#check-system-architecture)
          * [Python 3](#python-3)
-         * [unringing](#unringing)
+         * [FSL](#fsl)
       * [2. Install pipeline](#2-install-pipeline)
-         * [3. Configure your environment](#3-configure-your-environment)
+      * [3. Configure your environment](#3-configure-your-environment)
    * [Running](#running)
+      * [Usage](#usage)
+      * [1. With dwi/mask images](#1-with-dwimask-images)
+      * [2. With modality images](#2-with-modality-images)
+      * [3. With a directory](#3-with-a-directory)
    * [Tests](#tests)
       * [1. pipeline](#1-pipeline)
       * [2. unittest](#2-unittest)
-   * [List of images](#list-of-images)
-   * [Site names](#site-names)
    * [Multi threading](#multi-threading)
-   * [Order of spherical harmonics](#order-of-spherical-harmonics)
-   * [Number of zero padding](#number-of-zero-padding)
    * [NRRD support](#nrrd-support)
    * [Preprocessing](#preprocessing)
-      * [1. Denoising](#1-denoising)
-      * [2. Bvalue mapping](#2-bvalue-mapping)
-      * [3. Resampling](#3-resampling)
    * [Config](#config)
    * [Template](#template)
    * [List of outputs](#list-of-outputs)
       * [1. Folders](#1-folders)
       * [2. Files](#2-files)
-   * [Template creation](#template-creation)
-   * [Data harmonization](#data-harmonization)
-   * [Debugging](#debugging)
-      * [1. With the pipeline](#1-with-the-pipeline)
-      * [2. Use seperately](#2-use-seperately)
-      * [3. With a list of FA images](#3-with-a-list-of-fa-images)
-   * [Travel heads](#travel-heads)
-   * [Caveats](#caveats)
    * [Reference](#reference)
 
 
@@ -143,7 +134,7 @@ the prerequisite libraries:
     pip install -r requirements.txt --upgrade
 
 
-### 3. Configure your environment
+## 3. Configure your environment
 
 Make sure the following executables are in your path:
 
@@ -286,8 +277,8 @@ is advisable to leave out at least two cores for other processes to run smoothly
 The pipeline is written for NIFTI image format. However, NRRD support is incorporated through [NIFTI --> NRRD](https://github.com/pnlbwh/dMRIharmonization/blob/parallel/lib/preprocess.py#L78) 
 conversion on the fly.
 
-See Tashrif Billah, Sylvain Bouix and Yogesh Rathi, Various MRI Conversion Tools, https://github.com/pnlbwh/conversion, 
-2019, DOI: 10.5281/zenodo.2584003 for more details on the conversion method.
+See Billah, Tashrif; Bouix, Sylvain, Rathi, Yogesh; Various MRI Conversion Tools, 
+https://github.com/pnlbwh/conversion, 2019, DOI: 10.5281/zenodo.2584003 for more details on the conversion method.
 
 
 # Preprocessing
