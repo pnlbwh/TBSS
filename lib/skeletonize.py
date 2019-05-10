@@ -51,20 +51,30 @@ def _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst):
 
 
 def skeletonize(imgs, cases, modality, template, templateMask,
-                skeleton, skeletonMask, skeletonMaskDst, outDir, skelDir, ANTS):
+                skeleton, skeletonMask, skeletonMaskDst, outDir, statsDir, skelDir, qc):
 
     target= load(template)
     targetData= target.get_data()
     X,Y,Z= targetData.shape[0], targetData.shape[1], targetData.shape[2]
 
-    allFA= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
+    # computing and saving allFA is a computational overhead
+    # making it optional
+    if qc:
+        allFAdata= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
+
+    cumsumFA= np.zeros((X, Y, Z), dtype= 'float32')
     for i, imgPath in enumerate(imgs):
-        allFA[i,: ]= load(imgPath).get_data()
+        data= load(imgPath).get_data().clip(min= 0.)
+        cumsumFA+= data
+        if qc:
+            allFAdata[i,: ]= data
 
-    save_nifti(pjoin(outDir, f'all_{modality}.nii.gz'), np.moveaxis(allFA, 0, -1), target.affine, target.header)
+    if qc:
+        allFA= pjoin(statsDir, f'all_{modality}.nii.gz')
+        save_nifti(allFA, np.moveaxis(allFAdata, 0, -1), target.affine, target.header)
 
-    meanFAdata = allFA.mean(0)
-    meanFA = pjoin(outDir, 'mean_FA.nii.gz')
+    meanFAdata = cumsumFA/len(imgs)
+    meanFA = pjoin(statsDir, 'mean_FA.nii.gz')
 
     # outDir should contain
     # all_{modality}.nii.gz
@@ -77,11 +87,9 @@ def skeletonize(imgs, cases, modality, template, templateMask,
 
     if modality=='FA':
 
-        # TODO
-        # is the templateMask logic right?
         if not templateMask:
             print('Creating template mask ...')
-            meanFAmask= pjoin(outDir, 'mean_FA_mask.nii.gz')
+            meanFAmask= pjoin(statsDir, 'mean_FA_mask.nii.gz')
             meanFAmaskData = (meanFAdata > 0) * 1
             save_nifti(meanFAmask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
@@ -104,17 +112,19 @@ def skeletonize(imgs, cases, modality, template, templateMask,
 
         if not skeleton:
             print('Creating all three of skeleton, skeletonMask, and skeletonMaskDst ...')
-            skeleton= pjoin(outDir, 'mean_FA_skeleton.nii.gz')
-            skeletonMask = pjoin(outDir, 'mean_FA_skeleton_mask.nii.gz')
-            skeletonMaskDst= pjoin(outDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            skeleton= pjoin(statsDir, 'mean_FA_skeleton.nii.gz')
+            skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            skeletonMaskDst= pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
             _create_skeleton(meanFA, skeleton)
+            _create_skeletonMask(skeleton, SKEL_THRESH, skeletonMask)
+            _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst)
 
 
         if skeleton and not (skeletonMask or skeletonMaskDst):
             print('Creating skeletonMask and skeletonMaskDst ...')
-            skeletonMask = pjoin(outDir, 'mean_FA_skeleton_mask.nii.gz')
-            skeletonMaskDst= pjoin(outDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            skeletonMaskDst= pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
             _create_skeletonMask(skeleton, SKEL_THRESH, skeletonMask)
             _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst)
@@ -122,17 +132,22 @@ def skeletonize(imgs, cases, modality, template, templateMask,
 
         if skeleton and not skeletonMask and skeletonMaskDst:
             print('Creating skeletonMask ...')
-            skeletonMask = pjoin(outDir, 'mean_FA_skeleton_mask.nii.gz')
+            skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
 
             _create_skeletonMask(skeleton, SKEL_THRESH, skeletonMask)
 
 
         if (skeleton and skeletonMask) and not skeletonMaskDst:
             print('Creating skeletonMaskDst ...')
-            skeletonMaskDst = pjoin(outDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
             _create_skeletonMaskDst(meanFAmask, skeletonMask, skeletonMaskDst)
 
+    # mask the allFA
+    if qc:
+        check_call((' ').join(['fslmaths',
+                               allFA, '-mas', meanFAmask, allFA]),
+                               shell=True)
 
 
     '''
@@ -158,11 +173,10 @@ def skeletonize(imgs, cases, modality, template, templateMask,
     '''
 
 
-    # TODO
-    # what to use with -i when ANTS/ENIGMA
-    # do we need -s when ANTS
+    # FIXME: what to use with -i when ANTS/ENIGMA, look into tbss_skeleton.cc code
 
     # projecting all {modality} data onto skeleton
+    # TODO: parallelize
     for c, imgPath in zip(cases, imgs):
 
         print(f'projecting {imgPath} on skeleton ...')
@@ -173,26 +187,16 @@ def skeletonize(imgs, cases, modality, template, templateMask,
             # because whatever method has created FA, the same method should create MD, AD, RD
             # therefore, provided mask should have been considered already
 
-            if ANTS:
-                check_call((' ').join(['tbss_skeleton',
-                                      '-i', meanFA,
-                                      '-p', SKEL_THRESH, skeletonMaskDst, SEARCH_RULE_MASK,
-                                      pjoin(outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
-                                      modImgSkel, '-a', imgPath]),
-                                      shell= True)
-
-            else:
-                check_call((' ').join(['tbss_skeleton',
-                                      '-i', meanFA,
-                                      '-p', SKEL_THRESH, skeletonMaskDst, SEARCH_RULE_MASK,
-                                      pjoin(outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
-                                      modImgSkel, '-a', imgPath,
-                                      '-s', skeletonMask]),
-                                      shell= True)
+            check_call((' ').join(['tbss_skeleton',
+                                  '-i', meanFA,
+                                  '-p', SKEL_THRESH, skeletonMaskDst, SEARCH_RULE_MASK,
+                                  pjoin(outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
+                                  modImgSkel, '-a', imgPath]),
+                                  shell= True)
 
 
         else:
-            #
+
             check_call((' ').join(['tbss_skeleton',
                                   '-i', meanFA,
                                   '-p', SKEL_THRESH, skeletonMaskDst, SEARCH_RULE_MASK,
