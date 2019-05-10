@@ -1,0 +1,292 @@
+#!/usr/bin/env python
+
+# ===============================================================================
+# tbss (2019) pipeline is written by-
+#
+# TASHRIF BILLAH
+# Brigham and Women's Hospital/Harvard Medical School
+# tbillah@bwh.harvard.edu
+#
+# ===============================================================================
+# See details at https://github.com/pnlbwh/tbss
+# Submit issues at https://github.com/pnlbwh/tbss/issues
+# View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
+# ===============================================================================
+
+import argparse
+from tbssUtil import FILEDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath
+from conversion import loadExecutable, read_imgs_masks, read_cases
+from loadFiles import read_imgs
+from orderCases import orderCases
+from multiprocessing import Pool
+from psutil import cpu_count
+from tbss_single import process
+
+
+def main():
+
+    print('''# ===============================================================================
+# tbss (2019) pipeline is written by-
+# 
+# TASHRIF BILLAH
+# Brigham and Women's Hospital/Harvard Medical School
+# tbillah@bwh.harvard.edu
+# 
+# ===============================================================================
+# See details at https://github.com/pnlbwh/tbss
+# Submit issues at https://github.com/pnlbwh/tbss/issues
+# View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
+# ===============================================================================''')
+
+    parser = argparse.ArgumentParser(
+        description='TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.',
+        formatter_class= argparse.RawTextHelpFormatter)
+
+    parser.add_argument('--modality', type= str, default= 'FA', help= """Modality={FA,MD,AD,RD ...} of images to run TBSS on
+
+(i) single modality analysis:
+you must run --modality FA first, then you can run for other modalities such as --modality AD
+
+(ii) multi modality analysis:
+first modality must be FA, and then the rest i.e --modality FA,MD,AD,RD,...
+files from FA TBSS analysis are used in rest of the modalities""")
+
+
+    parser.add_argument('-i', '--input', type=str, required=True, help="""(i) DWI images and masks:
+a txt/csv file with dwi1,mask1\\ndwi2,mask2\\n... ; TBSS will start by creating FA, MD, AD, and RD;
+additionally, use --generate flag
+
+(ii) single modality analysis:
+a directory with one particular Modality={FA,MD,AD,RD,...} images, or
+a txt/csv file with ModImg1\\nModImg2\\n...
+TBSS will be done for specified Modality
+
+(iii) multi modality analysis: 
+comma-separated multiple input directories corresponding to the sequence of --modality, or
+a txt/csv file with Mod1_Img1,Mod2_Img1,...\\nMod1_Img2,Mod2_Img2,...\\n... ;
+TBSS will be done for FA first, and then for other modalities.""")
+
+    parser.add_argument('--generate', action='store_true',
+                        help='generate diffusion measures for dwi1,mask1\\n... list')
+
+    parser.add_argument('-c', '--caselist', type=str, required=True,
+                        help='caselist.txt where each line is a subject ID')
+
+    parser.add_argument('-o', '--outDir', type=str, required=True,
+                        help='where all outputs are saved in an organized manner')
+
+    parser.add_argument('--template', type=str,
+                        help='an FA image template (i.e ENIGMA, IIT), '
+                             'if not specified, ANTs template will be created from provided images, '
+                             'for ANTs template creation, you should provided FA images, '
+                             'once ANTs template is created, you can run TBSS on non FA images using that template')
+
+    parser.add_argument('--templateMask', type=str,
+                        help='mask of the FA template, if not provided, one will be created')
+
+    parser.add_argument('--skeleton', type=str,
+                        help='skeleton of the FA template, if not provided, one will be created,'
+                             'either provide all three of --skeleton, --skeletonMask, and --dist, or none of them')
+
+    parser.add_argument('--skeletonMask', type=str,
+                        help='mask of the provided skeleton')
+
+    parser.add_argument('--skeletonMaskDst', type=str,
+                        help='skeleton mask distance map')
+
+    parser.add_argument('-s', '--space', type=str,
+                        help='you may register your template (including ANTs) to another standard space i.e MNI, '
+                             'not recommended for a template that is already in MNI space (i.e ENIGMA, IIT)')
+
+    parser.add_argument('-l', '--labelMap', type=str,
+                        help='labelMap (atlas) in standard space (i.e any WhiteMatter atlas from '
+                             '~/fsl/data/atlas/, the atlas is used for ROI wise TBSS, '
+                             'default= ~/fsl/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz')
+
+    parser.add_argument('--lut', type= str,
+                         help='look up table for specified labelMap (atlas), default: FreeSurferColorLUT.txt')
+
+    parser.add_argument('--qc', action='store_true', help='halt TBSS pipeline to let the user observe quality of registration')
+    parser.add_argument('--avg', action='store_true', help='average Left/Right components of tracts in the atlas')
+    parser.add_argument('--force', action='store_true', help='overwrite existing directory/file')
+
+
+    parser.add_argument('-n','--ncpu', type= int,
+                        help= 'number of processes/threads to use (-1 for all available, may slow down your system)', default= 4)
+
+    diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
+
+    args = parser.parse_args()
+
+    # args_string=[]
+    # for key in args.__dict__.keys():
+    #     if args.__dict__[key]:
+    #         args_string.append(f'--{key} {args.__dict__[key]}')
+
+
+    # argument sanity check
+    if not args.template and args.templateMask:
+        raise AttributeError('--templateMask is invalid w/o --template')
+
+    if not args.skeleton and (args.skeletonMask or args.skeletonMaskDst):
+        raise AttributeError('--skeletonMask and/or --skeletonMaskDst is invalid w/o --skeleton')
+
+    # write config file ====================================================================================
+    if args.ncpu==-1:
+        N_CPU= cpu_count()
+    else:
+        N_CPU= int(args.ncpu)
+
+
+    with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
+        f.write('[DEFAULT]\n')
+        f.write(f'N_CPU = {args.ncpu}\n')
+        f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
+
+
+    # check executables ====================================================================================
+    apps = ['antsApplyTransforms',
+            'antsRegistrationSyNQuick.sh',
+            'antsMultivariateTemplateConstruction2.sh',
+            'antsRegistration',
+            'dtifit',
+            'tbss_1_preproc',
+            'tbss_skeleton',
+            'distancemap']
+
+    for exe in apps:
+        loadExecutable(exe)
+    print('All executables are found, program will begin now ...')
+
+
+    # organize images into different directories ===========================================================
+
+    # outDir
+    #    |
+    # -----------------------------------------------------------------------------
+    #    |           |             |                |        |       |
+    #    |           |             |                |        |       |
+    # transform   template        FA                MD       AD      RD
+    #                              |       (same inner file structure as that of FA)
+    #                              |
+    #                 ----------------------------------------
+    #                  |         |         |       |        |
+    #                 preproc  origdata  warped  skeleton  roi
+    #
+    # copy all FA into FA directory
+    # put all preprocessed data into preproc directory
+    # keep all warp/affine in transform directory
+    # output all warped images in warped directory
+    # output all skeletons in skel directory
+    # output ROI based analysis files in roi directory
+
+
+    args.outDir= abspath(args.outDir)
+    makeDirectory(args.outDir)
+    statsDir= pjoin(args.outDir, 'stats')
+    makeDirectory(statsDir, args.force)
+
+    modalities= args.modality.split(',')
+    num_modalities= len(modalities)
+
+    # if modality is not FA, check if 'transform' directory exists
+    # warp and affine will be used from this directory to study non FA images
+    xfrmDir = pjoin(args.outDir, 'transform')
+    if modalities[0]!='FA' and not isdir(xfrmDir):
+        raise FileNotFoundError(f'{xfrmDir}/ containing Warp and affine from FA registration does not exist')
+
+    for modality in modalities:
+        modDir = pjoin(args.outDir, f'{modality}')
+        makeDirectory(modDir, True)
+
+
+    cases= read_cases(args.caselist)
+
+    # calculate diffusion measures =========================================================================
+    # when input is a dwi/mask list
+    if args.generate:
+        from generate_diffusion_measures import generate_diffusion_measures
+
+        for modality in diffusionMeasures:
+            measureDir = pjoin(args.outDir, f'{modality}')
+            makeDirectory(measureDir, args.force)
+
+        dwImgs, masks= read_imgs_masks(args.input)
+
+        dwImgs, masks= orderCases(dwImgs, cases, masks)
+
+        pool= Pool(N_CPU)
+        # need to generate diffusion measures first
+        for dwImgPath, maskPath, caseId in zip(dwImgs, masks, cases):
+            pool.apply_async(func= generate_diffusion_measures,
+                             args= (dwImgPath, maskPath, caseId, args.outDir))
+
+
+        pool.close()
+        pool.join()
+
+
+    # when input is a modality image list
+    elif isfile(args.input):
+        allModImgs = read_imgs(args.input, num_modalities)
+
+        for i, modality in enumerate(modalities):
+            modDir = pjoin(args.outDir, f'{modality}')
+            # check if input directory is modDir, if not copy
+            for imgPath in allModImgs[:,i]:
+                if dirname(imgPath) is not modDir:
+                    check_call(f'cp {imgPath} {modDir}/', shell= True)
+
+
+    # when input are directories
+    else:
+        dirs= [abspath(p) for p in args.input.split(',')]
+
+        if len(dirs)!=num_modalities:
+            raise AttributeError('--modality and --input don\'t match')
+
+        for dir,modality in zip(dirs,modalities):
+            modDir = pjoin(args.outDir, f'{modality}')
+            # check if input directory is modDir, if not copy
+            if dir is not modDir:
+                # inDir = dirname(abspath(args.input))
+                check_call(f'cp -a {dir}/*.nii.gz {modDir}/', shell= True)
+
+
+    # args_string=[]
+    # for key in args.__dict__.keys():
+    #     if args.__dict__['arg']:
+    #         args_string+=f'{key} {args.__dict__[key]}'
+
+
+    # check_call(pjoin(FILEDIR, 'tbss-single') + ' ' + args_string, shell=True)
+
+    for modality in modalities:
+        print('\n\nTBSS for modality ', modality)
+        # first pass is FA images
+        modDir = pjoin(args.outDir, f'{modality}')
+        # change args.input
+        args.input= modDir
+        # change args.modality
+        args.modality= modality
+
+        if modality!='FA':
+            # obtain skeleton and stuffs from FA image
+
+            if not args.templateMask:
+                args.templateMask = pjoin(statsDir, 'mean_FA_mask.nii.gz')
+
+            if not args.skeleton:
+                args.skeleton = pjoin(statsDir, 'mean_FA_skeleton.nii.gz')
+
+            if not args.skeletonMask:
+                args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
+
+            if not args.skeletonMaskDst:
+                args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+
+        process(args)
+
+
+if __name__=='__main__':
+    main()
