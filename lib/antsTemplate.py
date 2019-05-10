@@ -14,7 +14,7 @@
 from tbssUtil import *
 config = ConfigParser()
 config.read(pjoin(FILEDIR,'config.ini'))
-N_proc= config['DEFAULT']['N_proc']
+N_proc= config['DEFAULT']['N_CPU']
 
 def antsMult(caselist, outPrefix):
 
