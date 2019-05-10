@@ -243,7 +243,41 @@ Alternatively, a directoy of modality images can be specified:
 
       -i INPUT              a directory with one particular Modality={FA,MD,AD,RD,...} images
 
-                        
+
+## list
+
+You can easily generate list of your FA images as follows:
+
+    cd projectDirectory
+    ls `pwd`/000????/eddy/FA/*_FA.nii.gz > imagelist.txt
+
+Here, we have a bunch of cases in the project directory whose IDs start with `000` and is followed by 
+four alphanumeric characters. The directory structure to obtain FA images is `000????/eddy/FA/`. Inside the 
+directory, we have an FA image ending with `_FA.nii.gz`.
+
+**Note**: `pwd` is used to obtain absolute path
+
+For just caselist, you can do:
+
+    cd projectDirectory
+    ls 000???? > caselist.txt
+
+
+Similarly, you can generate a list of your dwis,masks as follows:
+    
+    cd projectDirectory
+    touch dwi_mask_list.txt
+    for i in GT_????
+    do 
+        echo `pwd`/$i/${i}_dwi_xc.nii.gz,`pwd`/$i/${i}_dwi_xc_mask.nii.gz >> dwi_mask_list.txt;
+    done
+    
+In the above example, we have a bunch of cases with IDs GT_???? having separate folders.  
+The dwis of the cases follow the pattern `ID_dwi_xc.nii.gz` and corresponding masks follow the pattern  
+`ID_dwi_xc_mask.nii.gz`.
+
+In the same way, you can define your file structure and file names to obtain an image/case list.
+                 
 # Tests
 
 A small test data is provided with each [release](https://github.com/pnlbwh/tbss/releases). 
