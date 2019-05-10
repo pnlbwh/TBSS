@@ -33,11 +33,11 @@ def average_labels(labels):
         suffix= labelSplit[-1]
 
         if suffix=='l' or suffix=='r':
-            commonName= label[-2: ]
+            commonName= label[ :-2]
         elif suffix=='left':
-            commonName= label[-5: ]
+            commonName= label[ :-5]
         elif suffix == 'right':
-            commonName = label[-6:]
+            commonName = label[ :-6]
         elif prefix=='l' or prefix=='r':
             commonName= label[2: ]
         elif prefix=='left':
@@ -57,8 +57,8 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
     print('Creating ROI based statistics for', imgPath)
     img= load(imgPath).get_data()
 
-    df= pd.DataFrame(columns= ['Tracts','Average','nVoxels'])
-    df.loc[0]= [f'average{modality}']+ [num2str(x) for x in [img[img>0].mean(), len(np.where(img>0)[0])]]
+    df= pd.DataFrame(columns= ['Tract','Average','nVoxels'])
+    df.loc[0]= [f'Average{modality}']+ [num2str(x) for x in [img[img>0].mean(), len(np.where(img>0)[0])]]
 
     stat_file= pjoin(roiDir, f'{c}_{modality}_roi.csv')
     avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
@@ -71,42 +71,39 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
 
         df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [img_roi[_roi].mean(), len(_roi[0])]]
 
-
-    df.set_index('Tracts').to_csv(stat_file)
+    # TODO: save unsorted df to match with that of ENIGMA?
+    df.sort_values(by='Tract').set_index('Tract').to_csv(stat_file)
     print('Made ', stat_file)
 
 
     if avgFlag:
 
-        df_avg = pd.DataFrame(columns=['Tracts', 'Average', 'nVoxels'])
+        df_avg = pd.DataFrame(columns=['Tract', 'Average', 'nVoxels'])
         df_avg.loc[0] = df.loc[0].copy()
 
         row= 1
         for common in commonLabels:
-
             dm=[]
             num=[]
 
             for i, label in enumerate(label2name.values()):
-                if common in label:
+                # label.split('-') to avoid confusion between CP being in both CP-R and ICP-R
+                if common in label.split('-'):
 
                     df_avg.loc[row]= df.loc[i+1].copy() # Right or Left value
+                    row += 1
                     dm.append(float(df.loc[i+1][1]))
                     num.append(int(df.loc[i+1][2]))
 
-                    # since we are averaging over R/L only, ind <= 2
+                    # since we are averaging over R/L only, len(dm) <= 2
                     if len(dm)==2:
-                        row= row+1
                         # average of R/L
                         df_avg.loc[row] = [common, num2str(np.mean(dm)), str(int(np.mean(num)))]
+                        row = row + 1
                         break
 
-                    row+=1
 
-            row+=1
-
-
-        df_avg.set_index('Tracts').to_csv(avg_stat_file)
+        df_avg.sort_values(by='Tract').set_index('Tract').to_csv(avg_stat_file)
         print('Made ', avg_stat_file)
 
 
@@ -134,7 +131,7 @@ def roi_analysis(imgs, cases, modality, labelMapFile, lut, modDir, roiDir, avgFl
     # avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
     # read one stat_file, obtain headers
     df= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{modality}_roi.csv'))
-    df_comb= pd.DataFrame(columns= np.append('Cases', df['Tracts'].values))
+    df_comb= pd.DataFrame(columns= np.append('Cases', df['Tract'].values))
 
     for i, c in enumerate(cases):
         df= pd.read_csv(pjoin(roiDir, f'{c}_{modality}_roi.csv'))
@@ -142,13 +139,13 @@ def roi_analysis(imgs, cases, modality, labelMapFile, lut, modDir, roiDir, avgFl
         df_comb.loc[i]= np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
     combined_stat= pjoin(modDir, f'{modality}_combined_roi.csv')
-    df_comb.set_index('Cases').to_csv(combined_stat)
+    df_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_stat)
     print('Made ', combined_stat)
 
     if avgFlag:
         # read one avg_stat_file, obtain headers
         df_avg= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{modality}_roi_avg.csv'))
-        df_avg_comb= pd.DataFrame(columns= np.append('Cases', df_avg['Tracts'].values))
+        df_avg_comb= pd.DataFrame(columns= np.append('Cases', df_avg['Tract'].values))
 
         for i, c in enumerate(cases):
             df = pd.read_csv(pjoin(roiDir, f'{c}_{modality}_roi_avg.csv'))
@@ -156,10 +153,9 @@ def roi_analysis(imgs, cases, modality, labelMapFile, lut, modDir, roiDir, avgFl
             df_avg_comb.loc[i] = np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
         combined_avg_stat= pjoin(modDir, f'{modality}_combined_roi_avg.csv')
-        df_avg_comb.set_index('Cases').to_csv(combined_avg_stat)
+        df_avg_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_avg_stat)
         print('Made ', combined_avg_stat)
 
 
 if __name__=='__main__':
-
     pass
