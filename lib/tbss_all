@@ -189,7 +189,7 @@ TBSS will be done for FA first, and then for other modalities.""")
         args.skeletonMaskDst = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask_dst.nii.gz')
 
         args.lut = pjoin(enigmaDir, 'ENIGMA_look_up_table.txt')
-        args.labelMap =  pjoin(fslDataDir, 'atlases', 'JHU', 'JHU-ICBM-labels-1mm.nii.gz')
+        args.labelMap = pjoin(fslDataDir, 'atlases', 'JHU', 'JHU-ICBM-labels-1mm.nii.gz')
 
     elif args.fmrib:
         # use FSL provided templates
