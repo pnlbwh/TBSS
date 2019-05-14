@@ -14,7 +14,7 @@
 # ===============================================================================
 
 import argparse
-from tbssUtil import FILEDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath
+from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath, environ
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs
 from orderCases import orderCases
@@ -22,6 +22,7 @@ from multiprocessing import Pool
 from psutil import cpu_count
 from tbss_single import process
 
+fslDataDir= pjoin(environ['FSLDIR'], 'data')
 
 def main():
 
@@ -75,10 +76,20 @@ TBSS will be done for FA first, and then for other modalities.""")
     parser.add_argument('-o', '--outDir', type=str, required=True,
                         help='where all outputs are saved in an organized manner')
 
+    parser.add_argument('--ants', action='store_true',
+                        help='create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst')
+
+    parser.add_argument('--enigma', action='store_true',
+                        help='use ENGIMA provided template, templateMask, skeleton, skeletonMask, and skeletonMaskDst, '
+                             'do JHU white matter atlas based ROI analysis using ENIGMA look up table')
+
+    parser.add_argument('--fmrib', action='store_true',
+                        help='use FSL provided template, and skeleton')
+
     parser.add_argument('--template', type=str,
                         help='an FA image template (i.e ENIGMA, IIT), '
                              'if not specified, ANTs template will be created from provided images, '
-                             'for ANTs template creation, you should provided FA images, '
+                             'for ANTs template creation, you must provide FA images, '
                              'once ANTs template is created, you can run TBSS on non FA images using that template')
 
     parser.add_argument('--templateMask', type=str,
@@ -99,9 +110,7 @@ TBSS will be done for FA first, and then for other modalities.""")
                              'not recommended for a template that is already in MNI space (i.e ENIGMA, IIT)')
 
     parser.add_argument('-l', '--labelMap', type=str,
-                        help='labelMap (atlas) in standard space (i.e any WhiteMatter atlas from '
-                             '~/fsl/data/atlas/, the atlas is used for ROI wise TBSS, '
-                             'default= ~/fsl/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz')
+                        help='labelMap (atlas) in standard space (i.e any WhiteMatter atlas from ~/fsl/data/atlases/')
 
     parser.add_argument('--lut', type= str,
                          help='look up table for specified labelMap (atlas), default: FreeSurferColorLUT.txt')
@@ -114,29 +123,20 @@ TBSS will be done for FA first, and then for other modalities.""")
     parser.add_argument('-n','--ncpu', type= int,
                         help= 'number of processes/threads to use (-1 for all available, may slow down your system)', default= 4)
 
+    parser.add_argument('--SKEL_THRESH', type=str,
+                        help='threshold for masking skeleton and projecting FA image upon the skeleton', default='0.2')
+
+    parser.add_argument('--SEARCH_RULE_MASK', type=str,
+                        help='search rule mask for nonFA TBSS, see "tbss_skeleton --help"',
+                        default=pjoin(fslDataDir, 'standard', 'LowerCingulum_1mm.nii.gz'))
+
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
 
     args = parser.parse_args()
 
-    # args_string=[]
-    # for key in args.__dict__.keys():
-    #     if args.__dict__[key]:
-    #         args_string.append(f'--{key} {args.__dict__[key]}')
-
-
-    # argument sanity check
-    if not args.template and args.templateMask:
-        raise AttributeError('--templateMask is invalid w/o --template')
-
-    if not args.skeleton and (args.skeletonMask or args.skeletonMaskDst):
-        raise AttributeError('--skeletonMask and/or --skeletonMaskDst is invalid w/o --skeleton')
-
     # write config file ====================================================================================
     if args.ncpu==-1:
-        N_CPU= cpu_count()
-    else:
-        N_CPU= int(args.ncpu)
-
+        args.ncpu= cpu_count()
 
     with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
         f.write('[DEFAULT]\n')
@@ -157,6 +157,46 @@ TBSS will be done for FA first, and then for other modalities.""")
     for exe in apps:
         loadExecutable(exe)
     print('All executables are found, program will begin now ...')
+
+
+
+    # argument sanity check ================================================================================
+    if not args.template and args.templateMask:
+        raise AttributeError('--templateMask is invalid w/o --template')
+
+    if not args.skeleton and (args.skeletonMask or args.skeletonMaskDst):
+        raise AttributeError('--skeletonMask and/or --skeletonMaskDst is invalid w/o --skeleton')
+
+
+    if args.ants:
+        # clear all template arguments
+        print('--ants template specified, overriding any provided template')
+        args.template = None
+        args.templateMask = None
+        args.skeleton = None
+        args.skeletonMask = None
+        args.skeletonMaskDst = None
+
+    elif args.enigma:
+        # use enigma http://enigma.ini.usc.edu/wp-content/uploads/2013/02/enigmaDTI.zip provided templates
+        print('--enigma tempalate specified, '
+              'using http://enigma.ini.usc.edu/wp-content/uploads/2013/02/enigmaDTI.zip provided templates')
+        enigmaDir= pjoin(LIBDIR, 'data', 'enigmaDTI')
+        args.template = pjoin(enigmaDir, 'ENIGMA_DTI_FA.nii.gz')
+        args.templateMask = pjoin(enigmaDir, 'ENIGMA_DTI_FA_mask.nii.gz')
+        args.skeleton = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton.nii.gz')
+        args.skeletonMask = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask.nii.gz')
+        args.skeletonMaskDst = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask_dst.nii.gz')
+
+        args.lut = pjoin(enigmaDir, 'ENIGMA_look_up_table.txt')
+        args.labelMap =  pjoin(fslDataDir, 'atlases', 'JHU', 'JHU-ICBM-labels-1mm.nii.gz')
+
+    elif args.fmrib:
+        # use FSL provided templates
+        print('--fmrib specified, using $FSLDIR/standard/FMRIB58_FA*.nii.gz templates')
+        args.template= pjoin(fslDataDir, 'standard', 'FMRIB58_FA_1mm.nii.gz')
+        args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
+
 
 
     # organize images into different directories ===========================================================
@@ -215,7 +255,7 @@ TBSS will be done for FA first, and then for other modalities.""")
 
         dwImgs, masks= orderCases(dwImgs, cases, masks)
 
-        pool= Pool(N_CPU)
+        pool= Pool(args.ncpu)
         # need to generate diffusion measures first
         for dwImgPath, maskPath, caseId in zip(dwImgs, masks, cases):
             pool.apply_async(func= generate_diffusion_measures,
@@ -249,17 +289,8 @@ TBSS will be done for FA first, and then for other modalities.""")
             modDir = pjoin(args.outDir, f'{modality}')
             # check if input directory is modDir, if not copy
             if dir is not modDir:
-                # inDir = dirname(abspath(args.input))
                 check_call(f'cp -a {dir}/*.nii.gz {modDir}/', shell= True)
 
-
-    # args_string=[]
-    # for key in args.__dict__.keys():
-    #     if args.__dict__['arg']:
-    #         args_string+=f'{key} {args.__dict__[key]}'
-
-
-    # check_call(pjoin(FILEDIR, 'tbss-single') + ' ' + args_string, shell=True)
 
     for modality in modalities:
         print('\n\nTBSS for modality ', modality)
@@ -270,22 +301,7 @@ TBSS will be done for FA first, and then for other modalities.""")
         # change args.modality
         args.modality= modality
 
-        if modality!='FA':
-            # obtain skeleton and stuffs from FA image
-
-            if not args.templateMask:
-                args.templateMask = pjoin(statsDir, 'mean_FA_mask.nii.gz')
-
-            if not args.skeleton:
-                args.skeleton = pjoin(statsDir, 'mean_FA_skeleton.nii.gz')
-
-            if not args.skeletonMask:
-                args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
-
-            if not args.skeletonMaskDst:
-                args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
-
-        process(args)
+        args= process(args)
 
 
 if __name__=='__main__':

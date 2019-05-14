@@ -14,13 +14,12 @@
 # ===============================================================================
 
 import argparse
-from tbssUtil import FILEDIR, pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, ConfigParser
+from tbssUtil import FILEDIR, pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, ConfigParser, Pool
 from conversion import read_cases
 from conversion.antsUtil import antsReg
 from orderCases import orderCases
-from multiprocessing import Pool
 from glob import glob
-from plumbum.cmd import antsApplyTransforms
+from plumbum.cmd import antsApplyTransforms, fslmaths
 from plumbum import FG
 from skeletonize import skeletonize
 from roi_analysis import roi_analysis
@@ -29,33 +28,6 @@ config = ConfigParser()
 config.read(pjoin(FILEDIR,'config.ini'))
 N_CPU= int(config['DEFAULT']['N_CPU'])
 
-def main():
-    '''
-    PNL-TBSS
-    Use dtifit to generate FA, MD, AD, and RD.
-    Template can be three fold:
-    1. -e: ENIGMA template
-    2. -a: ANTs template created from provided FA images
-    3. -t: Other user defined template
-
-    Non-linear registration is computed among the FA images and the template.
-    Transforms (warp and affine) obtained from the above registration, are applied to the
-    modality image to bring them to template space. The modality can be one of
-    FA, MD, AD, RD etc (default FA).
-    [-m, --modality]
-
-    The modality images can be further warped to a standard space (an FA image).
-    [-s, --space]
-
-    ROI based statistics is obtained using an atlas (default JHU-White-Matter atlas).
-    [-a, --atlas]
-    [-l, --lookUp]
-
-    ENIGMA template is in MNI space, subsequent JHU atlas based analysis is done by default
-    For other templates, have the user specify -a, -l, -s
-    '''
-
-    pass
 
 def process(args):
 
@@ -132,26 +104,26 @@ def process(args):
         makeDirectory(pjoin(modDir, 'origdata'), True)
         makeDirectory(pjoin(modDir, 'preproc'), True)
 
-        # TODO: parallelize
+
+        pool= Pool(args.ncpu)
         for c, imgPath in zip(cases, modImgs):
             print('Processing ', c)
             FAmask= pjoin(args.outDir, 'FA', 'preproc', f'{c}_FA_mask.nii.gz')
             preprocMod= pjoin(preprocDir, f'{c}_{args.modality}.nii.gz')
 
-            check_call((' ').join(['fslmaths',
-                                   imgPath, '-mas', FAmask, preprocMod]),
-                                   shell=True)
+            pool.apply_async(fslmaths, (imgPath, '-mas', FAmask, preprocMod))
 
-            move(imgPath, pjoin(modDir, 'origdata'))
 
+        pool.close()
+        pool.join()
+
+        check_call((' ').join(['mv', pjoin(modDir, '*.nii.gz'), pjoin(modDir, 'origdata')]), shell= True)
 
     modImgs = glob(pjoin(preprocDir, f'*{args.modality}.nii.gz'))
 
 
-    ANTS= False
     # create template ======================================================================================
     if not args.template and args.modality=='FA':
-        ANTS= True
         print('Creating study specific template ...')
         # we could pass modImgs directly to antsMult(), instead saving them to a .txt file for logging
         # modImgs = glob(pjoin(args.outDir, f'{args.modality}', f'*{args.modality}*.nii.gz'))
@@ -202,55 +174,48 @@ def process(args):
         # TODO: rename the template
         args.template = outPrefix + 'Warped.nii.gz'
 
-    # TODO: parallelize
+
+    pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, modImgs):
         # generalize warp and affine
-        warp2tmp= glob(pjoin(xfrmDir, f'{c}_FA*Warp.nii.gz'))[0]
+        warp2tmp= glob(pjoin(xfrmDir, f'{c}_FA*[!Inverse]Warp.nii.gz'))[0]
         trans2tmp= glob(pjoin(xfrmDir, f'{c}_FA*GenericAffine.mat'))[0]
         output= pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')
 
         if not args.space:
-            antsApplyTransforms[
-                '-d', '3',
-                '-i', imgPath,
-                '-o', output,
-                '-r', args.template,
-                '-t', warp2tmp, trans2tmp,
-            ] & FG
+            pool.apply_async(antsApplyTransforms, ('-d', '3',
+                                                   '-i', imgPath,
+                                                   '-o', output,
+                                                   '-r', args.template,
+                                                   '-t', warp2tmp, trans2tmp))
 
         else:
-            antsApplyTransforms[
-                '-d', '3',
-                '-i', imgPath,
-                '-o', output,
-                '-r', args.space,
-                '-t', warp2space, trans2space, warp2tmp, trans2tmp
-            ] & FG
+            pool.apply_async(antsApplyTransforms, ('-d', '3',
+                                                   '-i', imgPath,
+                                                   '-o', output,
+                                                   '-r', args.template,
+                                                   '-t', warp2space, trans2space, warp2tmp, trans2tmp))
 
 
-
-    if args.qc:
-        # halt processing, pull up registered images for review
-        pass
+    pool.close()
+    pool.join()
 
 
     # create skeleton for each subject
     modImgsInTarget= glob(pjoin(warpDir, f'*_{args.modality}_to_target.nii.gz'))
     modImgsInTarget= orderCases(modImgsInTarget, cases)
 
-    skeletonize(modImgsInTarget, cases, args.modality, args.template, args.templateMask,
-                args.skeleton, args.skeletonMask, args.skeletonMaskDst, args.outDir, statsDir, skelDir, args.qc)
-
+    # obtain modified args from skeletonize() which will be used for other modalities than FA
+    args= skeletonize(modImgsInTarget, cases, args, statsDir, skelDir, xfrmDir)
 
     skelImgsInSub= glob(pjoin(skelDir, f'*_{args.modality}_to_target_skel.nii.gz'))
     skelImgsInSub= orderCases(skelImgsInSub, cases)
 
-    # TODO: define args class and carry args object throughout
     # roi based analysis
     if args.labelMap:
-        roi_analysis(skelImgsInSub, cases, args.modality, args.labelMap, args.lut, modDir, roiDir, args.avg)
+        roi_analysis(skelImgsInSub, cases, args, modDir, roiDir)
 
-    # return args
+    return args
 
 if __name__=='__main__':
-    main()
+    pass

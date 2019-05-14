@@ -69,9 +69,10 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
 
         img_roi= img*roi
 
+        # FIXME: check correctness of ROI mean
         df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [img_roi[_roi].mean(), len(_roi[0])]]
 
-    # TODO: save unsorted df to match with that of ENIGMA?
+    # FIXME: save unsorted df to match with that of ENIGMA?
     df.sort_values(by='Tract').set_index('Tract').to_csv(stat_file)
     print('Made ', stat_file)
 
@@ -107,20 +108,19 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         print('Made ', avg_stat_file)
 
 
-def roi_analysis(imgs, cases, modality, labelMapFile, lut, modDir, roiDir, avgFlag):
+def roi_analysis(imgs, cases, args, modDir, roiDir):
 
-    labelMap = load(labelMapFile).get_data()
-    intLabels = np.unique(labelMap)[1:]
-    label2name = parse_labels(intLabels, lut)
+    intLabels = load(args.labelMap).get_data()
+    label2name = parse_labels(np.unique(intLabels)[1:], args.lut)
     commonLabels= average_labels(label2name.values())
 
 
     pool= Pool(N_CPU)
     for c, imgPath in zip(cases, imgs):
 
-        # subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDir, avgFlag)
-        pool.apply_async(func= subject_stat, args= (imgPath, c, modality, label2name, commonLabels, labelMap,
-                                                    roiDir, avgFlag))
+        # subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
+        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
+                                                    roiDir, args.avg))
 
     pool.close()
     pool.join()
@@ -130,29 +130,29 @@ def roi_analysis(imgs, cases, modality, labelMapFile, lut, modDir, roiDir, avgFl
     # stat_file= pjoin(roiDir, f'{c}_{modality}_roi.csv')
     # avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
     # read one stat_file, obtain headers
-    df= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{modality}_roi.csv'))
+    df= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{args.modality}_roi.csv'))
     df_comb= pd.DataFrame(columns= np.append('Cases', df['Tract'].values))
 
     for i, c in enumerate(cases):
-        df= pd.read_csv(pjoin(roiDir, f'{c}_{modality}_roi.csv'))
+        df= pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi.csv'))
         # num2str() text formatting is for precision control
         df_comb.loc[i]= np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
-    combined_stat= pjoin(modDir, f'{modality}_combined_roi.csv')
+    combined_stat= pjoin(modDir, f'{args.modality}_combined_roi.csv')
     df_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_stat)
     print('Made ', combined_stat)
 
-    if avgFlag:
+    if args.avg:
         # read one avg_stat_file, obtain headers
-        df_avg= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{modality}_roi_avg.csv'))
+        df_avg= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{args.modality}_roi_avg.csv'))
         df_avg_comb= pd.DataFrame(columns= np.append('Cases', df_avg['Tract'].values))
 
         for i, c in enumerate(cases):
-            df = pd.read_csv(pjoin(roiDir, f'{c}_{modality}_roi_avg.csv'))
+            df = pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi_avg.csv'))
             # num2str() text formatting is for precision control
             df_avg_comb.loc[i] = np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
-        combined_avg_stat= pjoin(modDir, f'{modality}_combined_roi_avg.csv')
+        combined_avg_stat= pjoin(modDir, f'{args.modality}_combined_roi_avg.csv')
         df_avg_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_avg_stat)
         print('Made ', combined_avg_stat)
 
