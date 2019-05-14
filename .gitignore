@@ -6,4 +6,4 @@
 .bak
 __pycache__/
 test_data/
-enigmaDTI/
+enigmaDTI*
