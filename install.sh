@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 
-        
+
+# ================================
+
+SCRIPT=$(readlink -m $(type -p $0))
+SCRIPTDIR=$(dirname $SCRIPT)
+dataDir=$SCRIPTDIR/data
+enigmaDir=$SCRIPTDIR/data/enigmaDTI
+testDir=$SCRIPTDIR/lib/tests/
+testDataDir=$SCRIPTDIR/lib/tests/data
+libDir=$SCRIPTDIR/lib
+
+
+
 install()
 {
 # ================================
@@ -41,8 +53,9 @@ cp $dataDir/ENIGMA_look_up_table.txt.bak $enigmaDir/ENIGMA_look_up_table.txt
 
 # ================================
 echo Installing python libraries
-# pip install -r $SCRIPTDIR/requirements.txt
+pip install -r $SCRIPTDIR/requirements.txt --upgrade
 }
+
 
 
 test_pipeline()
@@ -50,22 +63,9 @@ test_pipeline()
 # ================================
 # pipeline tests
 
-# if [ -z $1 ]
-# then
-    # exit 1
-# elif [ $1 != "test" ]
-# then
-    # echo Undefined argument $1
-    # exit 1
-# else
-    # echo "Preparing to run TBSS pipeline tests ...
-# FA,MD,AD,RD modality TBSS are run on four dwi/mask pairs
-# Running multi-modality TBSS pipeline tests should take less than 30 minutes"
-# fi
-
 echo "Preparing to run TBSS pipeline tests ...
 FA,MD,AD,RD modality TBSS are run on four dwi/mask pairs
-Running multi-modality TBSS pipeline tests should take less than 30 minutes"
+Running multi-modality TBSS pipeline tests should take less than an hour"
 
 
 if [ ! -d $testDataDir ]
@@ -115,20 +115,21 @@ popd
 
 
 
-# # --enigma branch ==========================================
+# --enigma branch ==========================================
 echo Testing --enigma branch ...
 
 $libDir/tbss_all -i $IMAGELIST --generate \
 -c $CASELIST \
 --modality FA,MD,AD,RD --enigma \
--l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
 --avg -o $testDir/enigmaTemplateOutput/ \
 --ncpu -1 && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
 
-python -m unittest -v $testDir/test_enigma.py
+# pushd .
+# cd $SCRIPTDIR
+# python -m unittest -v $testDir/"test_enigma.py"
+# popd
 
-trap read debug
 
 # --fmrib branch ===========================================
 echo Testing --fmrib branch ...
@@ -140,12 +141,19 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 --avg -o $testDir/fmribTemplateOutput/ \
 --ncpu -1 && echo --fmrib branch execution successful \
 || echo --fmrib branch execution FAILED
+popd
 
+# pushd .
+# cd $SCRIPTDIR
+# python -m unittest -v $testDir/"test_fmrib.py"
+# popd
 
 
 # --studyTemplate branch ==================================
 echo Testing --studyTemplate branch ...
 
+pushd .
+cd $testDir/enigmaTemplateOutput/
 $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 -c $CASELIST \
 --modality FA,MD,AD,RD --studyTemplate \
@@ -154,11 +162,17 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 --avg -o $testDir/studyTemplateOutput/ \
 --ncpu -1 && echo --studyTemplate branch execution successful \
 || echo --studyTemplate branch execution FAILED
-
-# pop dcm_qa_uih/Ref
 popd
 
-# pop primitive working directory
+# pushd .
+# cd $SCRIPTDIR
+# python -m unittest -v $testDir/"test_study.py"
+# popd
+
+# run all tests together
+pushd .
+cd $SCRIPTDIR
+python -m unittest -v $testDir/test_*
 popd
 
 echo Testing complete.
@@ -167,16 +181,6 @@ echo Testing complete.
 
 
 # main function ==================
-
-SCRIPT=$(readlink -m $(type -p $0))
-SCRIPTDIR=$(dirname $SCRIPT)
-dataDir=$SCRIPTDIR/data
-enigmaDir=$SCRIPTDIR/data/enigmaDTI
-testDir=$SCRIPTDIR/lib/tests/
-testDataDir=$SCRIPTDIR/lib/tests/data
-libDir=$SCRIPTDIR/lib
-
-
 if [ -z $@ ]
 then
     echo """Example usage: 
