@@ -195,6 +195,8 @@ TBSS will be done for FA first, and then for other modalities.""")
         args.lut = pjoin(enigmaDir, 'ENIGMA_look_up_table.txt')
         args.labelMap = pjoin(fslDataDir, 'atlases', 'JHU', 'JHU-ICBM-labels-1mm.nii.gz')
 
+        args.avg= True
+
     elif args.fmrib:
         # use FSL provided templates
         print('--fmrib specified, using $FSLDIR/standard/FMRIB58_FA*.nii.gz templates')
