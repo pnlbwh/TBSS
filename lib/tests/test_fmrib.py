@@ -17,14 +17,14 @@ import pandas as pd
 from .util import *
 import numpy as np
 
-OUT_DIR= pjoin(FILEDIR,'enigmaTemplateOutput','stats')
-REF_DIR= pjoin(TEST_DATA_DIR,'enigma_res')
+OUT_DIR= pjoin(FILEDIR,'fmribTemplateOutput','stats')
+REF_DIR= pjoin(TEST_DATA_DIR,'fmrib_res')
 
 class TestFmrib(unittest.TestCase):
 
     print('Test FMRIB branch results')
 
-    def test_enigma_FA(self):
+    def test_fmrib_FA(self):
         print('FA equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'FA_combined_roi_avg.csv'))
@@ -45,7 +45,7 @@ class TestFmrib(unittest.TestCase):
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
-    def test_enigma_MD(self):
+    def test_fmrib_MD(self):
         print('MD equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'MD_combined_roi_avg.csv'))
@@ -66,7 +66,7 @@ class TestFmrib(unittest.TestCase):
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
-    def test_enigma_AD(self):
+    def test_fmrib_AD(self):
         print('AD equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'AD_combined_roi_avg.csv'))
@@ -87,7 +87,7 @@ class TestFmrib(unittest.TestCase):
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
-    def test_enigma_RD(self):
+    def test_fmrib_RD(self):
         print('RD equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'RD_combined_roi_avg.csv'))

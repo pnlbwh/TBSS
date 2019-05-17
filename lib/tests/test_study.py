@@ -17,14 +17,14 @@ import pandas as pd
 from .util import *
 import numpy as np
 
-OUT_DIR= pjoin(FILEDIR,'enigmaTemplateOutput','stats')
-REF_DIR= pjoin(TEST_DATA_DIR,'enigma_res')
+OUT_DIR= pjoin(FILEDIR,'studyTemplateOutput','stats')
+REF_DIR= pjoin(TEST_DATA_DIR,'study_res')
 
-class TestFmrib(unittest.TestCase):
+class TestStudy(unittest.TestCase):
 
-    print('Test FMRIB branch results')
+    print('Test studyTemplate branch results')
 
-    def test_enigma_FA(self):
+    def test_study_FA(self):
         print('FA equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'FA_combined_roi_avg.csv'))
@@ -41,11 +41,11 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 *   (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
-    def test_enigma_MD(self):
+    def test_study_MD(self):
         print('MD equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'MD_combined_roi_avg.csv'))
@@ -62,11 +62,11 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 *   (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
-    def test_enigma_AD(self):
+    def test_study_AD(self):
         print('AD equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'AD_combined_roi_avg.csv'))
@@ -83,11 +83,11 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 *   (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
-    def test_enigma_RD(self):
+    def test_study_RD(self):
         print('RD equivalence test')
         # read output csv
         dfo = pd.read_csv(pjoin(OUT_DIR, 'RD_combined_roi_avg.csv'))
@@ -104,9 +104,10 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 *   (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
+
 
 
 if __name__ == '__main__':
