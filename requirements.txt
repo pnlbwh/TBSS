@@ -1,0 +1,8 @@
+numpy
+nibabel
+dipy
+psutil
+plumbum
+pandas
+pynrrd
+git+https://github.com/pnlbwh/conversion.git
