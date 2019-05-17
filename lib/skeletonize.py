@@ -87,12 +87,31 @@ def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir):
         save_nifti(allFA, np.moveaxis(allFAdata, 0, -1), target.affine, target.header)
 
         print(f'''QC the warped {args.modality} images: {allFA}, view {seqFile} for index of volumes in {allFA}. 
-You may use fsleyes/fslview to load {allFA}. It might be helpful to rerun registration for warped images that are bad.
+You may use fsleyes/fslview to load {allFA}. It might be helpful to re-run registration for warped images that are bad.
 Moving images are : {args.outDir}/preproc
 Target is : {args.template}
 Transform files are : {xfrmDir}
 Warped images are : {args.outDir}/warped
-Save any re-registered images in {args.outDir}/warped''')
+Save any re-registered images in {args.outDir}/warped with the same name as before
+
+For re-registration of any subject, output the transform files to a temporary directory:
+        
+        mkdir /tmp/badRegistration/
+        
+        antsRegistrationSyNQuick.sh -d 3 \
+        -f TEMPLATE \
+        -m FA/preproc/caseid_FA.nii.gz \
+        -o /tmp/badRegistration/caseid_FA
+        
+        antsApplyTransforms -d 3 \
+        -i FA/preproc/caseid_FA.nii.gz \
+        -o FA/warped/caseid_{FA/MD/AD/RD}_to_target.nii.gz \
+        -r TEMPLATE \
+        -t /tmp/badRegistration/caseid_FA1Warp.nii.gz /tmp/badRegistration/caseid_FA0GenericAffine.mat
+    
+Finally, if wanted, you can copy the transform files to {args.xfrmDir} directory.
+
+Note: Replace all the above directories with absolute paths.''')
 
         while input('Press Enter when you are done with QC/re-registration: '):
             pass
