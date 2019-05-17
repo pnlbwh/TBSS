@@ -16,13 +16,14 @@
 import argparse
 from tbssUtil import FILEDIR, pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, ConfigParser, Pool
 from conversion import read_cases
-from conversion.antsUtil import antsReg
+from antsTemplate import antsReg
 from orderCases import orderCases
 from glob import glob
 from plumbum.cmd import antsApplyTransforms, fslmaths
 from plumbum import FG
 from skeletonize import skeletonize
 from roi_analysis import roi_analysis
+from antsTemplate import antsMult
 
 config = ConfigParser()
 config.read(pjoin(FILEDIR,'config.ini'))
@@ -37,15 +38,15 @@ def process(args):
 
     # outDir
     #    |
-    # -----------------------------------------------------------------------------
-    #    |           |       |         |                |        |       |
-    #    |           |       |         |                |        |       |
-    # transform   template  stats     FA                MD       AD      RD
-    #                                  |       (same inner file structure as that of FA)
-    #                                  |
-    #                     ----------------------------------------
-    #                      |         |         |       |        |
-    #                     preproc  origdata  warped  skeleton  roi
+    # ------------------------------------------------------------------------------------------------------
+    #    |           |             |                |        |       |                   |           |
+    #    |           |             |                |        |       |                   |           |
+    # transform   template        FA                MD       AD      RD                 log        stats
+    #                              |       (same inner file structure as that of FA)
+    #                              |
+    #                 ----------------------------------------
+    #                  |         |         |       |        |
+    #                 preproc  origdata  warped  skeleton  roi
     #
     # copy all FA into FA directory
     # put all preprocessed data into preproc directory
@@ -53,10 +54,12 @@ def process(args):
     # output all warped images in warped directory
     # output all skeletons in skel directory
     # output ROI based analysis files in roi directory
+    # save all ROI statistics, mean, and combined images
+
 
     # define directories
     modDir = pjoin(args.outDir, f'{args.modality}')
-    xfrmDir = pjoin(args.outDir, 'transform')
+    # args.xfrmDir = pjoin(args.outDir, 'transform')
     statsDir = pjoin(args.outDir, 'stats')
     templateDir = pjoin(args.outDir, 'template/')
     preprocDir= pjoin(modDir, 'preproc')
@@ -126,7 +129,7 @@ def process(args):
     if not args.template and args.modality=='FA':
         print('Creating study specific template ...')
         # we could pass modImgs directly to antsMult(), instead saving them to a .txt file for logging
-        # modImgs = glob(pjoin(args.outDir, f'{args.modality}', f'*{args.modality}*.nii.gz'))
+        # modImgs = glob(pjoin(preprocDir, f'*{args.modality}*.nii.gz'))
 
         makeDirectory(templateDir, args.force)
 
@@ -135,41 +138,38 @@ def process(args):
                    shell= True)
 
         # ATTN: antsMultivariateTemplateConstruction2.sh requires '/' at the end of templateDir
-        # antsMult(antsMultCaselist, templateDir)
+        antsMult(antsMultCaselist, templateDir, args.logDir)
         # TODO: rename the template
         args.template= pjoin(templateDir, 'template0.nii.gz')
 
         # warp and affine to template0.nii.gz have been created for each case during template construction
         # so template directory should be the transform directory
-        xfrmDir= templateDir
+        args.xfrmDir= templateDir
 
     # register each image to the template ==================================================================
     elif args.template:
         # find warp and affine of FA image to args.template for each case
         if args.modality=='FA':
-            pass
-            # makeDirectory(xfrmDir, True)
-            # pool= Pool(N_CPU)
-            # for c, imgPath in zip(cases, modImgs):
-            #     pool.apply_async(antsReg, (args.template, None, imgPath, pjoin(xfrmDir, f'{c}_FA')))
-            #
-            # pool.close()
-            # pool.join()
+            print(f'Registering FA images to {args.template} space ..')
+            makeDirectory(args.xfrmDir, True)
+            pool= Pool(N_CPU)
+            for c, imgPath in zip(cases, modImgs):
+                pool.apply_async(antsReg, (args.template, imgPath, pjoin(args.xfrmDir, f'{c}_FA'), args.logDir))
 
-    else:
-        # for ANTs template and nonFA, template directory should be the transform directory
-        xfrmDir = templateDir
-        args.template = pjoin(templateDir, 'template0.nii.gz')
+            pool.close()
+            pool.join()
+
 
     # register template to a standard space ================================================================
     # useful when you would like to do ROI based analysis using an atlas
     # project the created/specified template to the space of atlas
     if args.space:
-        outPrefix = pjoin(args.outDir, 'tmp2space')
+        print(f'Registering {args.template} to the space of {args.space} ...')
+        outPrefix = pjoin(args.xfrmDir, 'tmp2space')
         warp2space = outPrefix + '1Warp.nii.gz'
         trans2space = outPrefix + '0GenericAffine.mat'
         if not isfile(warp2space):
-            antsReg(args.space, None, args.template, outPrefix)
+            antsReg(args.space, args.template, outPrefix, args.logDir)
 
         # TODO: rename the template
         args.template = outPrefix + 'Warped.nii.gz'
@@ -178,8 +178,8 @@ def process(args):
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, modImgs):
         # generalize warp and affine
-        warp2tmp= glob(pjoin(xfrmDir, f'{c}_FA*[!Inverse]Warp.nii.gz'))[0]
-        trans2tmp= glob(pjoin(xfrmDir, f'{c}_FA*GenericAffine.mat'))[0]
+        warp2tmp= glob(pjoin(args.xfrmDir, f'{c}_FA*[!Inverse]Warp.nii.gz'))[0]
+        trans2tmp= glob(pjoin(args.xfrmDir, f'{c}_FA*GenericAffine.mat'))[0]
         output= pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')
 
         if not args.space:
@@ -206,14 +206,14 @@ def process(args):
     modImgsInTarget= orderCases(modImgsInTarget, cases)
 
     # obtain modified args from skeletonize() which will be used for other modalities than FA
-    args= skeletonize(modImgsInTarget, cases, args, statsDir, skelDir, xfrmDir)
+    args= skeletonize(modImgsInTarget, cases, args, statsDir, skelDir, args.xfrmDir)
 
     skelImgsInSub= glob(pjoin(skelDir, f'*_{args.modality}_to_target_skel.nii.gz'))
     skelImgsInSub= orderCases(skelImgsInSub, cases)
 
     # roi based analysis
     if args.labelMap:
-        roi_analysis(skelImgsInSub, cases, args, modDir, roiDir)
+        roi_analysis(skelImgsInSub, cases, args, statsDir, roiDir)
 
     return args
 

@@ -26,9 +26,11 @@ LIBDIR= dirname(FILEDIR)
 ROOTDIR= dirname(LIBDIR)
 
 # sys.path.append(FILEDIR)
-# sys.path.append(LIBDIR)
+sys.path.append(LIBDIR)
 
 from warnings import catch_warnings, filterwarnings, warn
+filterwarnings("ignore", '.*size changed.*')
+
 with catch_warnings():
     filterwarnings("ignore", category=FutureWarning)
     from nibabel import load, Nifti1Image

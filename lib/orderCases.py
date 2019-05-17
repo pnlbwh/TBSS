@@ -39,7 +39,7 @@ def orderCases(imgs, cases, masks=None):
             else:
                 print(f'Mismatch at case {c}, reordering ...')
                 # swap i,j th entries ?
-                # pass now, but this sorting can be optimized
+                # FIXME: pass now, but this sorting can be optimized
 
                 orderedImgs[i]= imgs[j]
                 if masks:

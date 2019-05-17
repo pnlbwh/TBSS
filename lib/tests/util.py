@@ -19,13 +19,15 @@ from subprocess import check_call
 import sys
 from configparser import ConfigParser
 from subprocess import check_call
+import unittest
 
 FILEDIR= abspath(dirname(__file__))
 LIBDIR= dirname(FILEDIR)
 ROOTDIR= dirname(LIBDIR)
+TEST_DATA_DIR= pjoin(FILEDIR, 'data')
 
-sys.path.append(FILEDIR)
-sys.path.append(LIBDIR)
+# sys.path.append(FILEDIR)
+# sys.path.append(LIBDIR)
 
 from warnings import catch_warnings, filterwarnings, warn
 with catch_warnings():
@@ -59,3 +61,7 @@ def makeDirectory(dir, force= False):
         warn(f'{dir} exists, --force not specified, continuing with existing directory')
     else:
         mkdir(dir)
+
+# Relative difference in percentage is defined as 2(a-b)/(a+b)*100
+REL_DIFF_THRESH=3
+

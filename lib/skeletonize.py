@@ -120,9 +120,12 @@ Save any re-registered images in {args.outDir}/warped''')
             meanFAmaskData = (meanFAdata > 0) * 1
             save_nifti(args.templateMask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
-            # essentially masking the created template
-            meanFAdata = meanFAdata * meanFAmaskData
-            save_nifti(meanFA, meanFAdata, target.affine, target.header)
+        else:
+            meanFAmaskData= load(args.templateMask).get_data()
+
+
+        meanFAdata = meanFAdata * meanFAmaskData
+        save_nifti(meanFA, meanFAdata, target.affine, target.header)
 
 
         # if skeleton is not given:

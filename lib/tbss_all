@@ -16,17 +16,17 @@
 import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath, environ
 from conversion import loadExecutable, read_imgs_masks, read_cases
-from loadFiles import read_imgs
+from loadFiles import read_imgs, write_caselist
 from orderCases import orderCases
 from multiprocessing import Pool
 from psutil import cpu_count
-from tbss_single import process
+from _version import __version__
 
 fslDataDir= pjoin(environ['FSLDIR'], 'data')
 
 def main():
 
-    print('''# ===============================================================================
+    print(f'''\n\n# ===============================================================================
 # tbss (2019) pipeline is written by-
 # 
 # TASHRIF BILLAH
@@ -37,7 +37,8 @@ def main():
 # See details at https://github.com/pnlbwh/tbss
 # Submit issues at https://github.com/pnlbwh/tbss/issues
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
-# ===============================================================================''')
+# ===============================================================================
+# __version__ {__version__}\n\n''')
 
     parser = argparse.ArgumentParser(
         description='TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.',
@@ -70,13 +71,13 @@ TBSS will be done for FA first, and then for other modalities.""")
     parser.add_argument('--generate', action='store_true',
                         help='generate diffusion measures for dwi1,mask1\\n... list')
 
-    parser.add_argument('-c', '--caselist', type=str, required=True,
+    parser.add_argument('-c', '--caselist', type=str,
                         help='caselist.txt where each line is a subject ID')
 
     parser.add_argument('-o', '--outDir', type=str, required=True,
                         help='where all outputs are saved in an organized manner')
 
-    parser.add_argument('--ants', action='store_true',
+    parser.add_argument('--studyTemplate', action='store_true',
                         help='create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst')
 
     parser.add_argument('--enigma', action='store_true',
@@ -96,8 +97,7 @@ TBSS will be done for FA first, and then for other modalities.""")
                         help='mask of the FA template, if not provided, one will be created')
 
     parser.add_argument('--skeleton', type=str,
-                        help='skeleton of the FA template, if not provided, one will be created,'
-                             'either provide all three of --skeleton, --skeletonMask, and --dist, or none of them')
+                        help='skeleton of the FA template, if not provided, one will be created')
 
     parser.add_argument('--skeletonMask', type=str,
                         help='mask of the provided skeleton')
@@ -119,6 +119,8 @@ TBSS will be done for FA first, and then for other modalities.""")
     parser.add_argument('--avg', action='store_true', help='average Left/Right components of tracts in the atlas')
     parser.add_argument('--force', action='store_true', help='overwrite existing directory/file')
 
+    parser.add_argument('--verbose', action='store_true', help='print everything to STDOUT')
+
 
     parser.add_argument('-n','--ncpu', type= int,
                         help= 'number of processes/threads to use (-1 for all available, may slow down your system)', default= 4)
@@ -134,15 +136,17 @@ TBSS will be done for FA first, and then for other modalities.""")
 
     args = parser.parse_args()
 
+
     # write config file ====================================================================================
     if args.ncpu==-1:
         args.ncpu= cpu_count()
+
 
     with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
         f.write('[DEFAULT]\n')
         f.write(f'N_CPU = {args.ncpu}\n')
         f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
-
+        f.write('verbose = {}\n'.format(1 if args.verbose else 0))
 
     # check executables ====================================================================================
     apps = ['antsApplyTransforms',
@@ -168,9 +172,9 @@ TBSS will be done for FA first, and then for other modalities.""")
         raise AttributeError('--skeletonMask and/or --skeletonMaskDst is invalid w/o --skeleton')
 
 
-    if args.ants:
+    if args.studyTemplate:
         # clear all template arguments
-        print('--ants template specified, overriding any provided template')
+        print('--study template specified, overriding any provided templates')
         args.template = None
         args.templateMask = None
         args.skeleton = None
@@ -203,10 +207,10 @@ TBSS will be done for FA first, and then for other modalities.""")
 
     # outDir
     #    |
-    # -----------------------------------------------------------------------------
-    #    |           |             |                |        |       |
-    #    |           |             |                |        |       |
-    # transform   template        FA                MD       AD      RD
+    # ------------------------------------------------------------------------------------------------------
+    #    |           |             |                |        |       |                   |           |
+    #    |           |             |                |        |       |                   |           |
+    # transform   template        FA                MD       AD      RD                 log        stats
     #                              |       (same inner file structure as that of FA)
     #                              |
     #                 ----------------------------------------
@@ -219,10 +223,16 @@ TBSS will be done for FA first, and then for other modalities.""")
     # output all warped images in warped directory
     # output all skeletons in skel directory
     # output ROI based analysis files in roi directory
+    # save all ROI statistics, mean, and combined images
 
 
     args.outDir= abspath(args.outDir)
     makeDirectory(args.outDir)
+
+    # force creation of log directory
+    args.logDir = pjoin(args.outDir, 'log')
+    makeDirectory(args.logDir, True)
+
     statsDir= pjoin(args.outDir, 'stats')
     makeDirectory(statsDir, args.force)
 
@@ -231,16 +241,16 @@ TBSS will be done for FA first, and then for other modalities.""")
 
     # if modality is not FA, check if 'transform' directory exists
     # warp and affine will be used from this directory to study non FA images
-    xfrmDir = pjoin(args.outDir, 'transform')
-    if modalities[0]!='FA' and not isdir(xfrmDir):
-        raise FileNotFoundError(f'{xfrmDir}/ containing Warp and affine from FA registration does not exist')
+    args.xfrmDir = pjoin(args.outDir, 'transform')
+    if modalities[0]!='FA' and not isdir(args.xfrmDir):
+        raise FileNotFoundError(f'{args.xfrmDir}/ containing Warp and affine from FA registration does not exist')
 
     for modality in modalities:
         modDir = pjoin(args.outDir, f'{modality}')
         makeDirectory(modDir, True)
 
-
-    cases= read_cases(args.caselist)
+    if args.caselist:
+        cases= read_cases(args.caselist)
 
     # calculate diffusion measures =========================================================================
     # when input is a dwi/mask list
@@ -249,9 +259,13 @@ TBSS will be done for FA first, and then for other modalities.""")
 
         for modality in diffusionMeasures:
             measureDir = pjoin(args.outDir, f'{modality}')
+            # the following generates a warning since dirs are already created in Ln:247-249
             makeDirectory(measureDir, args.force)
 
         dwImgs, masks= read_imgs_masks(args.input)
+        if not args.caselist:
+            # generate caselist
+            args.caselist, cases= write_caselist(args.outDir, List=dwImgs)
 
         dwImgs, masks= orderCases(dwImgs, cases, masks)
 
@@ -269,6 +283,9 @@ TBSS will be done for FA first, and then for other modalities.""")
     # when input is a modality image list
     elif isfile(args.input):
         allModImgs = read_imgs(args.input, num_modalities)
+        if not args.caselist:
+            # generate caselist
+            args.caselist, cases= write_caselist(args.outDir, List=allModImgs)
 
         for i, modality in enumerate(modalities):
             modDir = pjoin(args.outDir, f'{modality}')
@@ -281,6 +298,9 @@ TBSS will be done for FA first, and then for other modalities.""")
     # when input are directories
     else:
         dirs= [abspath(p) for p in args.input.split(',')]
+        if not args.caselist:
+            # generate caselist
+            args.caselist, cases= write_caselist(args.outDir, Dir=dirs[0])
 
         if len(dirs)!=num_modalities:
             raise AttributeError('--modality and --input don\'t match')
@@ -292,6 +312,7 @@ TBSS will be done for FA first, and then for other modalities.""")
                 check_call(f'cp -a {dir}/*.nii.gz {modDir}/', shell= True)
 
 
+    from tbss_single import process
     for modality in modalities:
         print('\n\nTBSS for modality ', modality)
         # first pass is FA images
