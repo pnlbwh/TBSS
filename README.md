@@ -14,7 +14,17 @@ Table of Contents
 =================
 
    * [Table of Contents](#table-of-contents)
+   * [Useful commands](#useful-commands)
+      * [1. Run ENIGMA TBSS](#1-run-enigma-tbss)
+      * [2. Run user template based TBSS](#2-run-user-template-based-tbss)
+      * [3. Minimum TBSS](#3-minimum-tbss)
+      * [4. ROI analysis](#4-roi-analysis)
    * [Introduction](#introduction)
+      * [Step-1: Preprocessing](#step-1-preprocessing)
+      * [Step-2: Registration](#step-2-registration)
+      * [Step-3: Skeleton creation](#step-3-skeleton-creation)
+      * [Step-4: Projection](#step-4-projection)
+      * [Step-5: ROI/Voxelwise analysis](#step-5-roivoxelwise-analysis)
    * [Template](#template)
       * [1. --enigma](#1---enigma)
       * [2. --fmrib](#2---fmrib)
@@ -50,8 +60,6 @@ Table of Contents
       * [2. Install pipeline](#2-install-pipeline)
       * [3. Configure your environment](#3-configure-your-environment)
    * [Running](#running)
-      * [Usage](#usage)
-      * [TBD](#tbd)
    * [multi-modality TBSS](#multi-modality-tbss)
    * [List creation](#list-creation)
       * [1. imagelist](#1-imagelist)
@@ -59,15 +67,71 @@ Table of Contents
    * [Tests](#tests)
       * [1. pipeline](#1-pipeline)
       * [2. unittest](#2-unittest)
-   * [ROI analysis](#roi-analysis)
    * [Multi threading](#multi-threading)
    * [NRRD support](#nrrd-support)
-   * [Misc.](#misc)
+   * [Analysis](#analysis)
+      * [1. ROI analysis](#1-roi-analysis)
+         * [i. --lut](#i---lut)
+         * [ii. --space](#ii---space)
+      * [2. Voxelwise analysis](#2-voxelwise-analysis)
+   * [QC](#qc)
    * [Reference](#reference)
 
 
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
+# Useful commands
+
+## 1. Run ENIGMA TBSS
+
+See details on [ENIGMA](http://enigma.ini.usc.edu/wp-content/uploads/DTI_Protocols/ENIGMA_TBSS_protocol_USC.pdf) TBSS.
+    
+     lib/tbss_all -i IMAGELIST.csv \
+    -c CASELIST.txt \
+    --modality FA,MD,AD,RD 
+    --enigma \
+    -o ~/enigmaTemplateOutput/
+    
+`IMAGELIST.csv` is a list of FA,MD,AD,RD images in separate columns. A particular diffusivity images for all cases need 
+not to be in the same directory. Rather, they can be anywhere in your machine. Just make sure to specify absolute 
+path to the diffusivity image in designated column of `IMAGELIST.csv`. See details in [ENIGMA branch](#1---enigma).
+
+**NOTE** For multi-modality like above, make sure to have FA as the first one.
+    
+## 2. Run user template based TBSS
+    
+    lib/tbss_all -i FAimageDIR,MDimageDIR \
+    --modality FA,MD \
+    --template your_FA.nii.gz \
+    --skeleton your_skeleton_FA.nii.gz \
+    -o ~/userTemplateOutput/
+
+Alternative to the `IMAGELIST.csv`, you can specify a directory corresponding to each modality you want to analyze. 
+However, you have to copy your diffusivity images in a directory. Yet, we are giving you the liberty of having any name 
+for the diffusivity images (it doesn't require to start with caseid/have keyword "FA" in the filename).
+
+Also, as you notice, we didn't specify a `CASELIST.txt`. Then, file names are used as case IDs. `your_FA.nii.gz` and 
+`your_skeleton_FA.nii.gz` are your templates. See details in [User template branch](#4-user-template).
+
+## 3. Minimum TBSS
+    
+    lib/tbss_all -i FAimageDIR \
+    -o ~/fmribuserTemplateOutput
+    
+Voila! The pipeline will create a study specific template. Default `--modality` is assumed to be **FA**. See details in 
+[study template branch](#3---studytemplate).
+
+
+## 4. ROI analysis
+
+With all the above, you may provide an atlas and a [space](#-space) of the atlas defining image. Then, [ROI based statistics](#roi-analysis) 
+will be calculated.
+
+    --labelMap JHU-ICBM-labels-1mm.nii.gz \
+    --lut data/ENIGMA_look_up_table.txt \
+    --space $FSLDIR/standard/FMRIB58_FA*.nii.gz
+
+Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
 
 
 # Introduction
@@ -84,7 +148,46 @@ job scheduling framework (i.e lsf).
 ![](doc/tbss-ofer-flowchart.png)
 
 
+## Step-1: Preprocessing
 
+`tbss_1_preproc *.nii.gz` pre-processes the FA images. It essentially zeros the end slices and erodes the image a little bit. 
+It also creates `caseid_FA_mask.nii.gz` that can be used to pre-process non-FA images. `tbss_1_preproc` puts the given FA 
+images in [origdata](#origdata) and pre-processed FA images in `FA` directory. The pipeline renames the latter to [preproc](#a-preproc).
+
+As explained above, non-FA images are pre-processed by applying `caseid_FA_mask.nii.gz` directly.
+
+
+## Step-2: Registration
+
+Each `caseid_FA.nii.gz` are registered to template space. The `caseid_*1Warp.nii.gz` and `caseid_*0GenericAffine.mat` 
+transform files are stored in [transform/template](#ii-transformtemplate) directory.
+
+The warp and affine are used to warp `caseid_FA.nii.gz` to template space: `caseid_FA_to_target.nii.gz`. The warped images 
+are saved in [warped](#c-warped) directory. Same warp and affine are used to warp non-FA images.
+
+
+## Step-3: Skeleton creation
+
+If a skeleton is not provided, it is created by `tbss_skeleton` command. `stats/meanFA.nii.gz` is used to create skeleton. 
+The `stats/meanFA.nii.gz` is obtained from all the warped images in `warped` directory.
+
+## Step-4: Projection
+
+Each subject diffusivity image is projected upon provided/created skeleton: `{modality}/skeleton/caseid_{modality}_to_target_skel.nii.gz`. 
+See `tbss_skeleton --help` for more details about how FA and non-FA images are projected upon skeleton. Also, read [Smith's 
+TBSS 2006](https://www.ncbi.nlm.nih.gov/pubmed/16624579) paper to know more about it.
+
+
+## Step-5: ROI/Voxelwise analysis
+
+Finally, we would like to do analysis on skeletonized data. ROI-based analysis can be done as noted in the [ENIGMA protocol](http://enigma.ini.usc.edu/wp-content/uploads/DTI_Protocols/ENIGMA_ROI_protocol_USC.pdf).
+In brief, each `caseid_FA_to_target_skel.nii.gz` is compared against an atlas. The atlas has multiple segments. We calculate
+average diffusivity (FA,MD etc.) of each segment and note them in a csv file: `{modality}/roi/caseid_{modality}_roi*.csv`.
+
+Summary of ROI analysis is saved in `stats/{modality}_combined_roi*csv`. The process is detailed in [ROI analysis](#roi-analysis).
+
+On the other hand, skeletonized 4D data `stats/all{modality}_skeletonized.nii.gz` can be used to do [voxelwise analysis](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide#voxelwise_statistics_on_the_skeletonised_FA_data). 
+ 
 # Template
 
 The pipeline has four branches:
@@ -288,13 +391,13 @@ to the template. `warped` directory contains warped data.
 
 #### d. skeleton
 
-Provided/created skeleton is projected upon each subject. This directory contains projected skeletons in subject space.
+Each subject diffusivity image is projected upon provided/created skeleton. This directory contains projected skeletons in subject space.
 
 #### e. roi
 
 If you choose to do ROI based analysis providing a `--labelMap`, then a `*_roi.csv` file is created for each case containing 
 region based statistics. Additionally, if you use `--avg` flag, RIGHT/LEFT regions in the ROIs are averaged. The averaged 
-statistics are saved in `*_roi.csv` file.
+statistics are saved in `*_roi_avg.csv` file.
 
 
 Several files are created down the pipeline. They are organized with proper folder hierarchy and naming:
@@ -310,10 +413,8 @@ Several files are created down the pipeline. They are organized with proper fold
 ### ii. transform/template
 
 If a template is given, input images are registered with the template. On the other hand, if a template is not 
-given/`--studyTemplate` branch is specified, a template is created in the pipeline. Corresponding transform files: 
-`*Affine.mat` and `*Warp*.nii.gz` are created in `transform/template` directory.
-
-
+given/`--studyTemplate` branch is specified, a template is created in the pipeline at `template` directory. 
+Corresponding transform files: `*0GenericAffine.mat` and `*1Warp.nii.gz` are created in `transform/template` directory.
 
 Moreover, same directory is used to store transform files if a template is further registered to another space (i.e. MNI).
 
@@ -391,13 +492,8 @@ Now that you have installed the prerequisite software, you are ready to install 
     git clone https://github.com/pnlbwh/tbss && cd tbss
     ./install setup test
     
-You
-
-
-Alternatively, if you already have ANTs, you can continue using your python environment by directly installing 
-the prerequisite libraries:
-
-    pip install -r requirements.txt --upgrade
+If you would not like to run tests, just omit the `test` argument. But it is recommended to run tests before you use 
+this pipeline to analyze your data.
 
 
 ## 3. Configure your environment
@@ -425,77 +521,12 @@ you may need to define [ANTSPATH](https://github.com/ANTsX/ANTs/wiki/Compiling-A
 
 # Running
 
-## Usage
 Upon successful installation, you should be able to see the help message
 
 `$ lib/tbss-pnl --help`
     
-    TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.
+See [Useful commands](#-useful-commands) for quick tips about running the pipeline.
 
-    optional arguments:
-    -h, --help            show this help message and exit
-    --modality MODALITY   Modality={FA,MD,AD,RD ...} of images to run TBSS on
-    
-                          (i) single modality analysis:
-                          you must run --modality FA first, then you can run for other modalities such as --modality AD
-    
-                          (ii) multi modality analysis:
-                          first modality must be FA, and then the rest i.e --modality FA,MD,AD,RD,...
-                          files from FA TBSS analysis are used in rest of the modalities
-    -i INPUT, --input INPUT
-                          (i) DWI images and masks:
-                          a txt/csv file with dwi1,mask1\ndwi2,mask2\n... ; TBSS will start by creating FA, MD, AD, and RD;
-                          additionally, use --generate flag
-    
-                          (ii) single modality analysis:
-                          a directory with one particular Modality={FA,MD,AD,RD,...} images, or
-                          a txt/csv file with ModImg1\nModImg2\n...
-                          TBSS will be done for specified Modality
-    
-                          (iii) multi modality analysis:
-                          comma-separated multiple input directories corresponding to the sequence of --modality, or
-                          a txt/csv file with Mod1_Img1,Mod2_Img1,...\nMod1_Img2,Mod2_Img2,...\n... ;
-                          TBSS will be done for FA first, and then for other modalities.
-    --generate            generate diffusion measures for dwi1,mask1\n... list
-    
-    -c CASELIST, --caselist CASELIST
-                          caselist.txt where each line is a subject ID
-    -o OUTDIR, --outDir OUTDIR
-                          where all outputs are saved in an organized manner
-    
-    --studyTemplate       create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst
-    --enigma              use ENGIMA provided template, templateMask, skeleton, skeletonMask, and skeletonMaskDst, do JHU white matter atlas based ROI analysis using ENIGMA look up table
-    --fmrib               use FSL provided template, and skeleton
-    
-    
-    --template TEMPLATE   an FA image template (i.e ENIGMA, IIT), if not specified, ANTs template will be created from provided images, for ANTs template creation, you must provide FA images, once ANTs template is created, you can run TBSS on non FA images using that template
-    --templateMask TEMPLATEMASK
-                          mask of the FA template, if not provided, one will be created
-    --skeleton SKELETON   skeleton of the FA template, if not provided, one will be created
-    --skeletonMask SKELETONMASK
-                          mask of the provided skeleton
-    --skeletonMaskDst SKELETONMASKDST
-                          skeleton mask distance map
-    -s SPACE, --space SPACE
-                          you may register your template (including ANTs) to another standard space i.e MNI, not recommended for a template that is already in MNI space (i.e ENIGMA, IIT)
-    
-    -l LABELMAP, --labelMap LABELMAP
-                          labelMap (atlas) in standard space (i.e any WhiteMatter atlas from ~/fsl/data/atlases/
-    --lut LUT             look up table for specified labelMap (atlas), default: FreeSurferColorLUT.txt
-    
-    --qc                  halt TBSS pipeline to let the user observe quality of registration
-    --avg                 average Left/Right components of tracts in the atlas
-    --force               overwrite existing directory/file
-    --verbose             print everything to STDOUT
-    
-    -n NCPU, --ncpu NCPU  number of processes/threads to use (-1 for all available, may slow down your system)
-    
-    --SKEL_THRESH SKEL_THRESH
-                          threshold for masking skeleton and projecting FA image upon the skeleton
-    --SEARCH_RULE_MASK SEARCH_RULE_MASK
-                          search rule mask for nonFA TBSS, see "tbss_skeleton --help"
-
-## TBD
 
 # multi-modality TBSS
 
@@ -591,13 +622,8 @@ You may run smaller and faster unit tests as follows.
     
 **NOTE** In the current release, unit tests are dependant upon the outputs of whole pipeline test. 
 This is likely to change in future. 
-    
 
-# ROI analysis
-
-`--enigma` and `--fmrib` branch of the pipeline performs ROI based analysis as default. The way it works is, each of the 
-projected skeleton in subject space is superimposed upon a binary label map.
-     
+  
 
 # Multi threading
 
@@ -619,10 +645,70 @@ conversion on the fly.
 See Billah, Tashrif; Bouix, Sylvain, Rathi, Yogesh; Various MRI Conversion Tools, 
 https://github.com/pnlbwh/conversion, 2019, DOI: 10.5281/zenodo.2584003 for more details on the conversion method.
 
-    
-    
-# Misc.
 
+# Analysis
+
+## 1. ROI analysis
+
+`--enigma` and `--fmrib` branch of the pipeline performs ROI based analysis as default. The way it works is, each of the 
+projected skeleton in subject space is superimposed upon a binary label map. The binary label map of each ROI is obtained from 
+each segment in the specified `--labelMap` (atlas). The segments are labelled with an integer in the atlas. 
+Two information from each ROI is obtained: Average{FA/MD/RD/AD} and number of voxels. Such info from all the ROI for each 
+case is saved in a `caseid_roi.csv` file. Additionally, if you use `--avg` flag, RIGHT/LEFT regions in the ROIs are 
+averaged. The averaged statistics are saved in `caseid_roi_avg.csv` file.
+
+Again, ROI statistics of all the subjects are summarized in `{modality}_combined_roi.csv` and 
+`{modality}_combined_roi_avg.csv` files in the `stats` folder.
+
+Other optional arguments for ROI-based analysis are
+
+### i. `--lut`
+
+A look up table for names of each integer labels in the atlas
+
+### ii. `--space`
+
+If you create a study-specific template or provide a template that is not in the same space of the atlas, 
+you must provide a T1/T2/FA image in the space of the atlas so the subject image can be warped to the same space.    
+    
+## 2. Voxelwise analysis
+
+You may perform voxelwise statistics on 4D skeletonised FA image `all_FA_skeletonised.nii.gz` following [this](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide#voxelwise_statistics_on_the_skeletonised_FA_data) instruction.
+All 4D data are saved in [stats](#iv-stats) folder.
+
+
+# QC
+
+Another merit of *TBSS* pipeline is automatic integration of quality checked/registration corrected data. 
+Each diffusivity image is warped to template space. The pipeline lets the user visually check the quality of registration. 
+Enable the `--qc` flag and the program will halt until you are done with QC-ing.
+
+Warped images are in [warped](#c-warped) directory. Merged 4D data are in [stats](#iv-stats) directory, corresponding 
+seqFile for index of volumes are also there. You may use fsleyes/fslview to scroll through the volumes. 
+
+If re-running registration is required for any case, save the re-registered images in [warped](#c-warped) directory 
+with the same name as before.
+
+Press Enter, and the program will resume with your corrected data.
+
+For re-registration of any subject, output the transform files to a temporary directory:
+    
+    mkdir /tmp/badRegistration/
+    
+    antsRegistrationSyNQuick.sh -d 3 \
+    -f TEMPLATE \
+    -m FA/preproc/caseid_FA.nii.gz \
+    -o /tmp/badRegistration/caseid_FA
+    
+    antsApplyTransforms -d 3 \
+    -i FA/preproc/caseid_FA.nii.gz \
+    -o FA/warped/caseid_{FA/MD/AD/RD}_to_target.nii.gz \
+    -r TEMPLATE \
+    -t /tmp/badRegistration/caseid_FA1Warp.nii.gz /tmp/badRegistration/caseid_FA0GenericAffine.mat
+
+Finally, if needed, you can copy the transform files in the [transform](#ii-transformtemplate) directory.
+
+**NOTE** Replace all the above directories with absolute paths.
 
 
 # Reference
