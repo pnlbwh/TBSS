@@ -125,6 +125,7 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 --ncpu -1 && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
 
+
 # pushd .
 # cd $SCRIPTDIR
 # python -m unittest -v $testDir/"test_enigma.py"
@@ -142,6 +143,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 --ncpu -1 && echo --fmrib branch execution successful \
 || echo --fmrib branch execution FAILED
 popd
+
 
 # pushd .
 # cd $SCRIPTDIR
@@ -163,6 +165,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 --ncpu -1 && echo --studyTemplate branch execution successful \
 || echo --studyTemplate branch execution FAILED
 popd
+
 
 # pushd .
 # cd $SCRIPTDIR
