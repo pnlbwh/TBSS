@@ -14,12 +14,13 @@
 # ===============================================================================
 
 import argparse
-from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath, environ
+from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath, environ, copyfile
 from conversion import loadExecutable, read_imgs_masks, read_cases
-from loadFiles import read_imgs, write_caselist
+from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
 from multiprocessing import Pool
 from psutil import cpu_count
+from datetime import datetime
 from _version import __version__
 
 fslDataDir= pjoin(environ['FSLDIR'], 'data')
@@ -54,7 +55,7 @@ first modality must be FA, and then the rest i.e --modality FA,MD,AD,RD,...
 files from FA TBSS analysis are used in rest of the modalities""")
 
 
-    parser.add_argument('-i', '--input', type=str, required=True, help="""(i) DWI images and masks:
+    parser.add_argument('-i', '--input', type=str, help="""(i) DWI images and masks:
 a txt/csv file with dwi1,mask1\\ndwi2,mask2\\n... ; TBSS will start by creating FA, MD, AD, and RD;
 additionally, use --generate flag
 
@@ -74,7 +75,7 @@ TBSS will be done for FA first, and then for other modalities.""")
     parser.add_argument('-c', '--caselist', type=str,
                         help='caselist.txt where each line is a subject ID')
 
-    parser.add_argument('-o', '--outDir', type=str, required=True,
+    parser.add_argument('-o', '--outDir', type=str,
                         help='where all outputs are saved in an organized manner')
 
     parser.add_argument('--studyTemplate', action='store_true',
@@ -132,21 +133,33 @@ TBSS will be done for FA first, and then for other modalities.""")
                         help='search rule mask for nonFA TBSS, see "tbss_skeleton --help"',
                         default=pjoin(fslDataDir, 'standard', 'LowerCingulum_1mm.nii.gz'))
 
+    parser.add_argument('--status', action='store_true',
+                        help='prints progress of TBSS pipeline so far')
+
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
 
     args = parser.parse_args()
 
+    if args.status:
+        from progress import show_progress
+        show_progress(args.verbose)
+        exit()
 
     # write config file ====================================================================================
     if args.ncpu==-1:
         args.ncpu= cpu_count()
 
+    args.outDir = abspath(args.outDir)
+    modalities = args.modality.split(',')
 
     with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
         f.write('[DEFAULT]\n')
         f.write(f'N_CPU = {args.ncpu}\n')
         f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
         f.write('verbose = {}\n'.format(1 if args.verbose else 0))
+        f.write(f'outDir= {args.outDir}\n')
+        f.write('modalities = {}\n'.format((',').join(modalities)))
+
 
     # check executables ====================================================================================
     apps = ['antsApplyTransforms',
@@ -228,7 +241,6 @@ TBSS will be done for FA first, and then for other modalities.""")
     # save all ROI statistics, mean, and combined images
 
 
-    args.outDir= abspath(args.outDir)
     makeDirectory(args.outDir)
 
     # force creation of log directory
@@ -238,7 +250,6 @@ TBSS will be done for FA first, and then for other modalities.""")
     statsDir= pjoin(args.outDir, 'stats')
     makeDirectory(statsDir, args.force)
 
-    modalities= args.modality.split(',')
     num_modalities= len(modalities)
 
     # if modality is not FA, check if 'transform' directory exists
@@ -253,6 +264,11 @@ TBSS will be done for FA first, and then for other modalities.""")
 
     if args.caselist:
         cases= read_cases(args.caselist)
+        # copy caselist into logDir
+        copyfile(args.caselist, pjoin(args.logDir, 'caselist.txt'))
+
+    # write start time
+    write_time(pjoin(args.logDir, 'start_time.txt'), datetime.now())
 
     # calculate diffusion measures =========================================================================
     # when input is a dwi/mask list
@@ -267,7 +283,7 @@ TBSS will be done for FA first, and then for other modalities.""")
         dwImgs, masks= read_imgs_masks(args.input)
         if not args.caselist:
             # generate caselist
-            args.caselist, cases= write_caselist(args.outDir, List=dwImgs)
+            args.caselist, cases= write_caselist(args.logDir, List=dwImgs)
 
         dwImgs, masks= orderCases(dwImgs, cases, masks)
 
@@ -287,7 +303,7 @@ TBSS will be done for FA first, and then for other modalities.""")
         allModImgs = read_imgs(args.input, num_modalities)
         if not args.caselist:
             # generate caselist
-            args.caselist, cases= write_caselist(args.outDir, List=allModImgs)
+            args.caselist, cases= write_caselist(args.logDir, List=allModImgs)
 
         for i, modality in enumerate(modalities):
             modDir = pjoin(args.outDir, f'{modality}')
@@ -302,7 +318,7 @@ TBSS will be done for FA first, and then for other modalities.""")
         dirs= [abspath(p) for p in args.input.split(',')]
         if not args.caselist:
             # generate caselist
-            args.caselist, cases= write_caselist(args.outDir, Dir=dirs[0])
+            args.caselist, cases= write_caselist(args.logDir, Dir=dirs[0])
 
         if len(dirs)!=num_modalities:
             raise AttributeError('--modality and --input don\'t match')
@@ -312,6 +328,7 @@ TBSS will be done for FA first, and then for other modalities.""")
             # check if input directory is modDir, if not copy
             if dir is not modDir:
                 check_call(f'cp -a {dir}/*.nii.gz {modDir}/', shell= True)
+
 
 
     from tbss_single import process
@@ -325,6 +342,10 @@ TBSS will be done for FA first, and then for other modalities.""")
         args.modality= modality
 
         args= process(args)
+
+
+    # write final time
+    write_time(pjoin(args.logDir, 'final_time.txt'), datetime.now())
 
 
 if __name__=='__main__':
