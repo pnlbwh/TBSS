@@ -32,7 +32,7 @@ def show_progress(verbose= False):
 
 
     print('Output directory:', outDir)
-    print('Number of cases to process:', num_cases)
+    print('Number of cases to process:    ', num_cases)
     for modality in modalities:
         modality_progress(outDir, modality, num_cases, verbose)
 
