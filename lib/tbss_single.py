@@ -73,7 +73,7 @@ def process(args):
     makeDirectory(roiDir, True)
 
 
-    # modality can be one of the diffusionMeasures= ['FA','MD','AD','RD']
+    # modality can be one of [FA,MD,AD,RD]
     # we could use just listdir(), but the following would be more strict and safe
     modImgs = glob(pjoin(modDir, '*.nii.gz'))
     modImgs = orderCases(modImgs, cases)
