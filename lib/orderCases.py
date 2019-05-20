@@ -37,7 +37,7 @@ def orderCases(imgs, cases, masks=None):
                                         'imgPath should have caseId in it')
 
             else:
-                print(f'Mismatch at case {c}, reordering ...')
+                # print(f'Mismatch at case {c}, reordering ...')
                 # swap i,j th entries ?
                 # FIXME: pass now, but this sorting can be optimized
 
