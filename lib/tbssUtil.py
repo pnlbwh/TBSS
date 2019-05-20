@@ -59,6 +59,7 @@ def makeDirectory(dir, force= False):
         rmtree(dir)
         mkdir(dir)
     elif not force and isdir(dir):
-        warn(f'{dir} exists, --force not specified, continuing with existing directory')
+        pass
+        # warn(f'{dir} exists, --force not specified, continuing with existing directory')
     else:
         mkdir(dir)
