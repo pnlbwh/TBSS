@@ -57,24 +57,26 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
 
     print('Creating ROI based statistics for', imgPath)
     img= load(imgPath).get_data()
+    _imgNonzero= img>0
 
     df= pd.DataFrame(columns= ['Tract','Average','nVoxels'])
-    df.loc[0]= [f'Average{modality}']+ [num2str(x) for x in [img[img>0].mean(), len(np.where(img>0)[0])]]
+
+    _img_roi= img[_imgNonzero]
+    df.loc[0]= [f'Average{modality}']+ [num2str(x) for x in [_img_roi.mean(), _img_roi.size]]
 
     stat_file= pjoin(roiDir, f'{c}_{modality}_roi.csv')
     avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
 
     for i ,intLabel in enumerate(label2name.keys()):
         roi = labelMap == int(intLabel)
-        _roi = np.where(roi>0)
+        _roi = np.logical_and(_imgNonzero, roi)
+        _img_roi= img[_roi]
 
-        img_roi= img*roi
+        df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [_img_roi.mean(), _img_roi.size]]
 
-        # FIXME: check correctness of ROI mean
-        df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [img_roi[_roi].mean(), len(_roi[0])]]
-
+    df.set_index('Tract').to_csv(stat_file)
     # FIXME: save unsorted df to match with that of ENIGMA?
-    df.sort_values(by='Tract').set_index('Tract').to_csv(stat_file)
+    # df.sort_values(by='Tract').set_index('Tract').to_csv(stat_file)
     print('Made ', stat_file)
 
 
@@ -100,7 +102,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
                     # since we are averaging over R/L only, len(dm) <= 2
                     if len(dm)==2:
                         # average of R/L
-                        df_avg.loc[row] = [common, num2str(np.mean(dm)), str(int(np.mean(num)))]
+                        df_avg.loc[row] = [common, num2str(np.mean(dm)), str(int(np.sum(num)))]
                         row = row + 1
                         break
 
@@ -115,16 +117,15 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
     label2name = parse_labels(np.unique(intLabels)[1:], args.lut)
     commonLabels= average_labels(label2name.values())
 
-
-    pool= Pool(N_CPU)
+    # pool= Pool(N_CPU)
     for c, imgPath in zip(cases, imgs):
 
-        # subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
-        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
-                                                    roiDir, args.avg))
+        subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
+        # pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
+        #                                             roiDir, args.avg))
 
-    pool.close()
-    pool.join()
+    # pool.close()
+    # pool.join()
 
 
     # combine csvs
@@ -159,4 +160,21 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
 
 
 if __name__=='__main__':
+
+    imgs=['/rfanfs/pnl-zorro/projects/HH_SCZ/Felix/run_tbss_ants/stats/V09254_FA_to_target_skel.nii.gz']
+    cases=['V09254']
+
+    class args:
+        lut=[]
+        avg=[]
+        modality=[]
+
+    args.lut= '/home/tb571/Documents/TBSS/data/enigmaDTI/ENIGMA_look_up_table.txt'
+    args.avg= True
+    args.modality= 'FA'
+    args.labelMap= '/home/tb571/fsl/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz'
+    statsDir= '/rfanfs/pnl-zorro/projects/HH_SCZ/Felix/run_tbss_ants/stats'
+    roiDir= '/rfanfs/pnl-zorro/projects/HH_SCZ/Felix/run_tbss_ants/stats'
+
+    roi_analysis(imgs, cases, args, statsDir, roiDir)
     pass
