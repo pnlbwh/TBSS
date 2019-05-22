@@ -14,7 +14,8 @@
 # ===============================================================================
 
 import argparse
-from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, dirname, abspath, environ, copyfile
+from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
+    dirname, abspath, environ, copyfile, warn
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
@@ -67,7 +68,13 @@ TBSS will be done for specified Modality
 (iii) multi modality analysis: 
 comma-separated multiple input directories corresponding to the sequence of --modality, or
 a txt/csv file with Mod1_Img1,Mod2_Img1,...\\nMod1_Img2,Mod2_Img2,...\\n... ;
-TBSS will be done for FA first, and then for other modalities.""")
+TBSS will be done for FA first, and then for other modalities.
+
+(iv) separate nonFA TBSS:
+if you wish to run TBSS for other modalities in future, files created during FA TBSS will be 
+integrated into the nonFA TBSS. Provide --xfrmDir, --output from previous FA TBSS. 
+In addition, provide any templates created during FA TBSS. On the other hand, specification of 
+--input and --modality are same as above.""")
 
     parser.add_argument('--generate', action='store_true',
                         help='generate diffusion measures for dwi1,mask1\\n... list')
@@ -136,6 +143,10 @@ TBSS will be done for FA first, and then for other modalities.""")
     parser.add_argument('--status', action='store_true',
                         help='prints progress of TBSS pipeline so far')
 
+    parser.add_argument('--xfrmDir', type=str,
+                        help='used with separate/future nonFA TBSS, provide previously created transform/template directory')
+
+
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
 
     args = parser.parse_args()
@@ -146,12 +157,23 @@ TBSS will be done for FA first, and then for other modalities.""")
         exit()
 
 
+    if args.outDir:
+        args.outDir = abspath(args.outDir)
+
+    # if modality is not FA, check if 'transform' directory exists
+    # warp and affine will be used from this directory to study non FA images
+    if not args.xfrmDir:
+        args.xfrmDir = pjoin(args.outDir, 'transform')
+    else:
+        args.xfrmDir = abspath(args.xfrmDir)
+        args.outDir = dirname(args.xfrmDir)
+        warn(f'Running separate nonFA TBSS, --outDir is assigned to previous FA TBSS: {args.outDir}')
+
+    modalities = args.modality.split(',')
+
     # write config file ====================================================================================
     if args.ncpu==-1:
         args.ncpu= cpu_count()
-
-    args.outDir = abspath(args.outDir)
-    modalities = args.modality.split(',')
 
     with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
         f.write('[DEFAULT]\n')
@@ -177,6 +199,8 @@ TBSS will be done for FA first, and then for other modalities.""")
     print('All executables are found, program will begin now ...')
 
 
+    if not environ['ANTSPATH']:
+        raise EnvironmentError('ANTSPATH is not set')
 
     # argument sanity check ================================================================================
     if not args.template and args.templateMask:
@@ -253,9 +277,7 @@ TBSS will be done for FA first, and then for other modalities.""")
 
     num_modalities= len(modalities)
 
-    # if modality is not FA, check if 'transform' directory exists
-    # warp and affine will be used from this directory to study non FA images
-    args.xfrmDir = pjoin(args.outDir, 'transform')
+
     if modalities[0]!='FA' and not isdir(args.xfrmDir):
         raise FileNotFoundError(f'{args.xfrmDir}/ containing Warp and affine from FA registration does not exist')
 
@@ -271,7 +293,7 @@ TBSS will be done for FA first, and then for other modalities.""")
 
     for modality in modalities:
         modDir = pjoin(args.outDir, f'{modality}')
-        makeDirectory(modDir, True)
+        makeDirectory(modDir, args.force)
 
     if args.caselist:
         cases= read_cases(args.caselist)
