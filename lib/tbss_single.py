@@ -133,7 +133,7 @@ def process(args):
 
         makeDirectory(templateDir, args.force)
 
-        antsMultCaselist = pjoin(args.outDir, 'antsMultCaselist.txt')
+        antsMultCaselist = pjoin(args.logDir, 'antsMultCaselist.txt')
         check_call((' ').join(['ls', pjoin(preprocDir, f'*{args.modality}.nii.gz'), '>', antsMultCaselist]),
                    shell= True)
 
