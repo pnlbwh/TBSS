@@ -216,7 +216,7 @@ Note: Replace all the above directories with absolute paths.''')
     pool.close()
     pool.join()
 
-    allFAskeletonized= pjoin(statsDir, 'all_FA_skeletonized.nii.gz')
+    allFAskeletonized= pjoin(statsDir, f'all_{args.modality}_skeletonized.nii.gz')
     print('Creating ', allFAskeletonized)
     save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
     print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
