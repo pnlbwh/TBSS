@@ -72,7 +72,10 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         _roi = np.logical_and(_imgNonzero, roi)
         _img_roi= img[_roi]
 
-        df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [_img_roi.mean(), _img_roi.size]]
+        if _img_roi.size:
+            df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [_img_roi.mean(), _img_roi.size]]
+        else:
+            df.loc[i + 1] = [label2name[intLabel]] + ['0','0']
 
     df.set_index('Tract').to_csv(stat_file)
     # FIXME: save unsorted df to match with that of ENIGMA?
@@ -160,21 +163,4 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
 
 
 if __name__=='__main__':
-
-    imgs=['/rfanfs/pnl-zorro/projects/HH_SCZ/Felix/run_tbss_ants/stats/V09254_FA_to_target_skel.nii.gz']
-    cases=['V09254']
-
-    class args:
-        lut=[]
-        avg=[]
-        modality=[]
-
-    args.lut= '/home/tb571/Documents/TBSS/data/enigmaDTI/ENIGMA_look_up_table.txt'
-    args.avg= True
-    args.modality= 'FA'
-    args.labelMap= '/home/tb571/fsl/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz'
-    statsDir= '/rfanfs/pnl-zorro/projects/HH_SCZ/Felix/run_tbss_ants/stats'
-    roiDir= '/rfanfs/pnl-zorro/projects/HH_SCZ/Felix/run_tbss_ants/stats'
-
-    roi_analysis(imgs, cases, args, statsDir, roiDir)
     pass
