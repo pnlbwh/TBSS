@@ -33,9 +33,9 @@ Table of Contents
       * [4. User template](#4-user-template)
    * [Caselist](#caselist)
    * [Input images](#input-images)
-         * [1. With dwi/mask image list](#1-with-dwimask-image-list)
-         * [2. With diffusivity image list](#2-with-diffusivity-image-list)
-         * [3. With diffusivity image directory](#3-with-diffusivity-image-directory)
+      * [1. With dwi/mask image list](#1-with-dwimask-image-list)
+      * [2. With diffusivity image list](#2-with-diffusivity-image-list)
+      * [3. With diffusivity image directory](#3-with-diffusivity-image-directory)
    * [Space](#space)
    * [List of outputs](#list-of-outputs)
       * [1. Folders](#1-folders)
@@ -131,7 +131,7 @@ In a nutshell, this pipeline should facilitate an user in running TBSS study by 
 Moreover, it harnesses multiprocessing capability from Python making the program significantly faster than any 
 job scheduling framework (i.e lsf).
 
-![](doc/tbss-ofer-flowchart.png)
+![](doc/tbss-flowchart.png)
 
 
 ## Step-1: Preprocessing
