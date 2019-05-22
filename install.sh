@@ -172,7 +172,44 @@ popd
 # python -m unittest -v $testDir/"test_study.py"
 # popd
 
-# run all tests together
+
+echo Testing partial --enigma branch ...
+
+pushd .
+cd $testDir/enigmaTemplateOutput
+$libDir/tbss_all -i MD/origdata,RD/origdata \
+-c $CASELIST \
+--xfrmDir $testDir/enigmaTemplateOutput/transform \
+--modality MD,RD --enigma \
+--avg -o $testDir/enigmaTemplateOutput/ \
+--ncpu -1 && echo Partial --enigma branch execution successful \
+|| echo Partial --enigma branch execution FAILED
+popd
+
+
+# partial testing =========================================
+echo Testing partial --studyTemplate branch ...
+
+pushd .
+cd $testDir/enigmaTemplateOutput/
+$libDir/tbss_all -i AD/origdata,RD/origdata \
+-c $CASELIST \
+--xfrmDir $testDir/studyTemplateOutput/template \
+--modality AD,RD \
+--template $testDir/studyTemplateOutput/template/template0.nii.gz \
+--templateMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
+--skeleton $testDir/studyTemplateOutput/stats/mean_FA_skeleton.nii.gz \
+--skeletonMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
+--skeletonMaskDst $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask_dst.nii.gz \
+-s $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz \
+-l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
+--avg -o $testDir/studyTemplateOutput2/ \
+--ncpu -1 && echo Partial --studyTemplate branch execution successful \
+|| echo Partial --studyTemplate branch execution FAILED
+popd
+
+
+# run all unittests together ==============================
 pushd .
 cd $SCRIPTDIR
 python -m unittest -v $testDir/test_*
@@ -183,7 +220,7 @@ echo Testing complete.
 }
 
 
-# main function ==================
+# main function ===========================================
 if [ -z $@ ]
 then
     echo """Example usage: 
