@@ -22,7 +22,7 @@ REF_DIR= pjoin(TEST_DATA_DIR,'enigma_res')
 
 class TestFmrib(unittest.TestCase):
 
-    print('Test FMRIB branch results')
+    print('Test ENIGMA branch results')
 
     def test_enigma_FA(self):
         print('FA equivalence test')
