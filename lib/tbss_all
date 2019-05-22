@@ -145,6 +145,7 @@ TBSS will be done for FA first, and then for other modalities.""")
         show_progress(args.verbose)
         exit()
 
+
     # write config file ====================================================================================
     if args.ncpu==-1:
         args.ncpu= cpu_count()
@@ -257,6 +258,16 @@ TBSS will be done for FA first, and then for other modalities.""")
     args.xfrmDir = pjoin(args.outDir, 'transform')
     if modalities[0]!='FA' and not isdir(args.xfrmDir):
         raise FileNotFoundError(f'{args.xfrmDir}/ containing Warp and affine from FA registration does not exist')
+
+    # log the argument-adjusted given command ==============================================================
+    args_string = [abspath(__file__)]
+    for key in args.__dict__.keys():
+        if args.__dict__[key]:
+            args_string.append(f'--{key} {args.__dict__[key]}')
+
+    with open(pjoin(args.logDir, 'command.txt'), 'w') as f:
+        f.write((' ').join(args_string))
+
 
     for modality in modalities:
         modDir = pjoin(args.outDir, f'{modality}')
