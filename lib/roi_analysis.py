@@ -120,15 +120,15 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
     label2name = parse_labels(np.unique(intLabels)[1:], args.lut)
     commonLabels= average_labels(label2name.values())
 
-    # pool= Pool(N_CPU)
+    pool= Pool(N_CPU)
     for c, imgPath in zip(cases, imgs):
 
-        subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
-        # pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
-        #                                             roiDir, args.avg))
+        # subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
+        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
+                                                    roiDir, args.avg))
 
-    # pool.close()
-    # pool.join()
+    pool.close()
+    pool.join()
 
 
     # combine csvs
