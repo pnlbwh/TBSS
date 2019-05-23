@@ -1,3 +1,16 @@
+# ===============================================================================
+# tbss (2019) pipeline is written by-
+#
+# TASHRIF BILLAH
+# Brigham and Women's Hospital/Harvard Medical School
+# tbillah@bwh.harvard.edu
+#
+# ===============================================================================
+# See details at https://github.com/pnlbwh/tbss
+# Submit issues at https://github.com/pnlbwh/tbss/issues
+# View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
+# ===============================================================================
+
 from tbssUtil import pjoin, load, check_call
 
 
