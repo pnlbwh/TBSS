@@ -41,8 +41,9 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 * abs(dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
+        print('Relative difference: ', rel_diff)
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
     def test_fmrib_MD(self):
@@ -62,8 +63,9 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 * abs(dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
+        print('Relative difference: ', rel_diff)
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
     def test_fmrib_AD(self):
@@ -83,8 +85,9 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 * abs(dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
+        print('Relative difference: ', rel_diff)
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
     def test_fmrib_RD(self):
@@ -104,8 +107,9 @@ class TestFmrib(unittest.TestCase):
         np.testing.assert_array_equal(dfg.columns, dfo.columns)
 
         # value relative percentage difference (all values)
-        rel_diff = 2 * (dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
+        rel_diff = 2 * abs(dfg.values[:, 1:] - dfo.values[:, 1:]).sum() / \
                    (dfg.values[:, 1:] + dfo.values[:, 1:]).sum() * 100
+        print('Relative difference: ', rel_diff)
         np.testing.assert_array_less(rel_diff, REL_DIFF_THRESH)
 
 
