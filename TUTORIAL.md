@@ -20,6 +20,7 @@ Table of Contents
       * [2. Run user template based TBSS](#2-run-user-template-based-tbss)
       * [3. Minimum TBSS](#3-minimum-tbss)
       * [4. ROI analysis](#4-roi-analysis)
+      * [5. Check progress](#5-check-progress)
    * [Overview](#overview)
       * [Step-1: Preprocessing](#step-1-preprocessing)
       * [Step-2: Registration](#step-2-registration)
@@ -118,6 +119,33 @@ will be calculated.
     --space $FSLDIR/standard/FMRIB58_FA*.nii.gz
 
 Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
+
+
+## 5. Check progress
+
+If you have a good number of cases to process, and you would like to know how far the pipeline has progressed, 
+do the following:
+
+    lib/tbss_all --status
+
+The `--status` command uses information from `lib/confing.ini` to collect information about the ongoing TBSS study. 
+It will print a dashboard like below:
+
+    Output directory:               ~/my_output_directory
+    Number of cases to process:     228
+    
+    Progress of FA TBSS:
+    
+    origdata obtained:              228
+    pre-processed:                  228
+    registered to template space:   228
+    skeletonized:                   228
+    roi-based stat calculated:      228
+    
+    Time taken so far: 2 days, 17 hours, 54 minutes and 3 seconds
+
+    
+Amazing, isn't it!     
 
 
 # Overview
