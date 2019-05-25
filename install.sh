@@ -79,7 +79,7 @@ cp $dataDir/ENIGMA_look_up_table.txt.bak $enigmaDir/ENIGMA_look_up_table.txt
 
 # ================================
 echo Installing python libraries
-pip install -r $SCRIPTDIR/requirements.txt --upgrade
+pip install -r $SCRIPTDIR/requirements.txt --upgrade --no-cache-dir
 }
 
 
@@ -148,7 +148,7 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 -c $CASELIST \
 --modality FA,MD,AD,RD --enigma \
 --avg -o $testDir/enigmaTemplateOutput/ \
---ncpu -1 && echo --enigma branch execution successful \
+--ncpu -1 --force && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
 
 
@@ -247,7 +247,7 @@ echo Testing complete.
 
 
 # main function ===========================================
-if [ -z $@ ]
+if [ -z $1 ]
 then
     echo """Example usage: 
 ./install.sh setup test
