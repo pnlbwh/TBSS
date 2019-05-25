@@ -46,8 +46,21 @@ then
     echo "FSLDIR is set"
 else
     echo "FSL environment is not set, may be you want to do the following: "
-    echo "export FSLDIR=~/fsl && source ~/fsl/etc/fslconf/fsl.sh && export PATH=$PATH:~/fsl/bin"
+    echo "export FSLDIR=~/fsl && source ~/fsl/etc/fslconf/fsl.sh && export PATH=\$PATH:~/fsl/bin"
     exit 1
+fi
+
+
+# ================================
+echo Checking ANTSPATH
+if [ -z $ANTSPATH ]
+then
+    echo "ANTSPATH is not set and/or ANTs commands are not available in PATH"
+    echo "May be you forgot to do: "
+    echo "export ANTSPATH=/path/to/ANTs/scripts && export PATH=\$PATH:/path/to/ANTs/executables"
+    exit 1
+else
+    echo "ANTSPATH is set"
 fi
 
 
