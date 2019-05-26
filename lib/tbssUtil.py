@@ -37,7 +37,7 @@ with catch_warnings():
     from dipy.io.image import load_nifti
     from dipy.io import read_bvals_bvecs
     from dipy.core.gradients import gradient_table
-    from dipy.segment.mask import applymask
+    from dipy.segment.mask import applymask, median_otsu
     import dipy.reconst.dti as dipyDti
 
 from plumbum.cmd import dtifit as fslDti
