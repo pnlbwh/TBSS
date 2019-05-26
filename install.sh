@@ -126,13 +126,13 @@ then
 fi
 touch $CASELIST
 
-echo Generating bet mask for test data ...
+echo Generating brain mask for test data ...
 for i in `ls *.nii`
 do
     IFS=., read -r prefix _ _ <<< $i
     if [ -f $prefix.bval ] && [ -f $prefix.bvec ]
     then
-        bet $i $prefix -m -n
+        $libDir/dwiMask.py -i $i -o $prefix
         echo `pwd`/$i,`pwd`/${prefix}_mask.nii.gz >> $IMAGELIST
         echo $prefix >> $CASELIST
     fi
@@ -150,6 +150,7 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 --avg -o $testDir/enigmaTemplateOutput/ \
 --ncpu -1 --force && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
+
 
 
 # pushd .
