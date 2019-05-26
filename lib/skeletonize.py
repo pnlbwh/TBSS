@@ -57,7 +57,7 @@ def calc_mean(imgs, shape, qc):
         allFAdata= np.zeros((len(imgs), shape[0], shape[1], shape[2]), dtype= 'float32')
     cumsumFA= np.zeros(shape, dtype= 'float32')
 
-    print('Calculating meanFA over all the cases ...')
+    
     for i, imgPath in enumerate(imgs):
         data= load(imgPath).get_data().clip(min= 0.)
         cumsumFA+= data
@@ -80,6 +80,8 @@ def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir):
         for i, c in enumerate(cases):
             f.write(f'{i},{c}\n')
 
+    
+    print(f'Calculating mean {args.modality} over all the cases ...')
     allFAdata, cumsumFA= calc_mean(imgs, (X,Y,Z), args.qc)
 
     if args.qc:
