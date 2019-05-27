@@ -200,6 +200,8 @@ popd
 # popd
 
 
+
+# partial testing =========================================
 echo Testing partial --enigma branch ...
 
 pushd .
@@ -214,7 +216,7 @@ $libDir/tbss_all -i MD/origdata,RD/origdata \
 popd
 
 
-# partial testing =========================================
+
 echo Testing partial --studyTemplate branch ...
 
 pushd .
