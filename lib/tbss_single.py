@@ -164,11 +164,11 @@ def process(args):
     # useful when you would like to do ROI based analysis using an atlas
     # project the created/specified template to the space of atlas
     if args.space:
-        print(f'Registering {args.template} to the space of {args.space} ...')
         outPrefix = pjoin(args.xfrmDir, 'tmp2space')
         warp2space = outPrefix + '1Warp.nii.gz'
         trans2space = outPrefix + '0GenericAffine.mat'
         if not isfile(warp2space):
+            print(f'Registering {args.template} to the space of {args.space} ...')
             antsReg(args.space, args.template, outPrefix, args.logDir)
 
         # TODO: rename the template
