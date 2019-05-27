@@ -167,7 +167,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 --modality FA,MD,AD,RD --fmrib \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
 --avg -o $testDir/fmribTemplateOutput/ \
---ncpu -1 && echo --fmrib branch execution successful \
+--ncpu -1 --force && echo --fmrib branch execution successful \
 || echo --fmrib branch execution FAILED
 popd
 
@@ -189,7 +189,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 -s $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
 --avg -o $testDir/studyTemplateOutput/ \
---ncpu -1 && echo --studyTemplate branch execution successful \
+--ncpu -1 --force && echo --studyTemplate branch execution successful \
 || echo --studyTemplate branch execution FAILED
 popd
 

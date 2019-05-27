@@ -63,5 +63,5 @@ def makeDirectory(dir, force= False):
         mkdir(dir)
 
 # Relative difference in percentage is defined as 2|a-b|/(a+b)*100
-REL_DIFF_THRESH=25
+REL_DIFF_THRESH=30
 print(f'\nThreshold for relative difference in percentage 2|a-b|/(a+b)*100 is set to {REL_DIFF_THRESH}\n')
