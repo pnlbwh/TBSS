@@ -46,7 +46,7 @@ def main():
         description='TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.',
         formatter_class= argparse.RawTextHelpFormatter)
 
-    parser.add_argument('--modality', type= str, default= 'FA', help= """Modality={FA,MD,AD,RD ...} of images to run TBSS on
+    parser.add_argument('--modality', type= str, default= 'FA', help= """Modality={FA,MD,AD,RD...} of images to run TBSS on
 
 (i) single modality analysis:
 you must run --modality FA first, then you can run for other modalities such as --modality AD
@@ -270,7 +270,7 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
 
     # force creation of log directory
     args.logDir = pjoin(args.outDir, 'log')
-    makeDirectory(args.logDir, True)
+    makeDirectory(args.logDir, args.force)
 
     statsDir= pjoin(args.outDir, 'stats')
     makeDirectory(statsDir, args.force)
@@ -285,7 +285,10 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     args_string = [abspath(__file__)]
     for key in args.__dict__.keys():
         if args.__dict__[key]:
-            args_string.append(f'--{key} {args.__dict__[key]}')
+            if type(args.__dict__[key])== type(True):
+                args_string.append(f'--{key}')
+            else:
+                args_string.append(f'--{key} {args.__dict__[key]}')
 
     with open(pjoin(args.logDir, 'command.txt'), 'w') as f:
         f.write((' ').join(args_string))
