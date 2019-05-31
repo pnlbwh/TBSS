@@ -152,7 +152,6 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 || echo --enigma branch execution FAILED
 
 
-
 # pushd .
 # cd $SCRIPTDIR
 # python -m unittest -v $testDir/"test_enigma.py"
@@ -226,7 +225,7 @@ $libDir/tbss_all -i AD/origdata,RD/origdata \
 --xfrmDir $testDir/studyTemplateOutput/template \
 --modality AD,RD \
 --template $testDir/studyTemplateOutput/template/template0.nii.gz \
---templateMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
+--templateMask $testDir/studyTemplateOutput/stats/mean_FA_mask.nii.gz \
 --skeleton $testDir/studyTemplateOutput/stats/mean_FA_skeleton.nii.gz \
 --skeletonMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
 --skeletonMaskDst $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask_dst.nii.gz \
