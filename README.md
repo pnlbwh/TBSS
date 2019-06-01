@@ -39,6 +39,7 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 * pandas = 1.2.1
 * dipy = 0.16.0
 * nibabel = 2.3.0
+* nilearn = 0.5.2
 * pynrrd = 0.3.6
 * conversion = 2.0
 
