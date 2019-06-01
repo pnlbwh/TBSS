@@ -21,12 +21,14 @@ Table of Contents
       * [3. Minimum TBSS](#3-minimum-tbss)
       * [4. ROI analysis](#4-roi-analysis)
       * [5. Check progress](#5-check-progress)
+      * [6. Create summary](#6-create-summary)
    * [Overview](#overview)
       * [Step-1: Preprocessing](#step-1-preprocessing)
       * [Step-2: Registration](#step-2-registration)
       * [Step-3: Skeleton creation](#step-3-skeleton-creation)
       * [Step-4: Projection](#step-4-projection)
-      * [Step-5: ROI/Voxelwise analysis](#step-5-roivoxelwise-analysis)
+      * [Step-5: View results](#step-5-view-results)
+      * [Step-6: ROI/Voxelwise analysis](#step-6-roivoxelwise-analysis)
    * [Branches/Templates](#branchestemplates)
       * [1. --enigma](#1---enigma)
       * [2. --fmrib](#2---fmrib)
@@ -144,9 +146,16 @@ It will print a dashboard like below:
     
     Time taken so far: 2 days, 17 hours, 54 minutes and 3 seconds
 
-    
-Amazing, isn't it!     
+Amazing, isn't it! 
 
+ 
+## 6. Create summary
+
+Finally, TBSS pipeline can generate an HTML file with skeleton overlaid upon the diffusivity measure for all cases.
+
+    lib/writeHtml.py --dir tbss/output/directory
+    
+    
 
 # Overview
 
@@ -191,8 +200,19 @@ Each subject diffusivity image is projected upon provided/created skeleton: `{mo
 See `tbss_skeleton --help` for more details about how FA and non-FA images are projected upon skeleton. Also, read [Smith's 
 TBSS 2006](https://www.ncbi.nlm.nih.gov/pubmed/16624579) paper to know more about it.
 
+## Step-5: View results
 
-## Step-5: ROI/Voxelwise analysis
+TBSS pipeline can generate an HTML file with skeleton overlaid upon the diffusivity measure for all cases.
+
+    lib/writeHtml.py --dir tbss/output/directory
+    
+The `tbss/output/directory` is where you have results stored in different subdirectories named after modalities. The 
+above script will create a `slicesdir` inside each modality directory while `slicedir/summary.html` file has skeleton 
+overlaid upon the diffusivity image for all the cases in `caselist.txt`.
+
+
+
+## Step-6: ROI/Voxelwise analysis
 
 Finally, we would like to do analysis on skeletonized data. ROI-based analysis can be done as noted in the [ENIGMA protocol](http://enigma.ini.usc.edu/wp-content/uploads/DTI_Protocols/ENIGMA_ROI_protocol_USC.pdf).
 In brief, each `caseid_FA_to_target_skel.nii.gz` is compared against an atlas. The atlas has multiple segments. We calculate
