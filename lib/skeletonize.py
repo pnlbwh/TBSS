@@ -67,7 +67,7 @@ def calc_mean(imgs, shape, qc):
     return (allFAdata, cumsumFA)
 
 
-def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir):
+def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir, miFile):
 
     target= load(args.template)
     targetData= target.get_data()
@@ -90,6 +90,8 @@ def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir):
 
         print(f'''\n\nQC the warped {args.modality} images: {allFA}, view {seqFile} for index of volumes in all_FA.nii.gz. 
 You may use fsleyes/fslview to load {allFA}.
+
+MI metric b/w the warped images and target are stored in {miFile}
 
 It might be helpful to re-run registration for warped images that are bad.
 

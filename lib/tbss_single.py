@@ -13,13 +13,14 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-import argparse
+
 from tbssUtil import FILEDIR, pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, ConfigParser, Pool
 from conversion import read_cases
 from antsTemplate import antsReg
 from orderCases import orderCases
 from glob import glob
 from plumbum.cmd import antsApplyTransforms, fslmaths
+from measureSimilarity import measureSimilarity
 from plumbum import FG
 from skeletonize import skeletonize
 from roi_analysis import roi_analysis
@@ -29,6 +30,10 @@ config = ConfigParser()
 config.read(pjoin(FILEDIR,'config.ini'))
 N_CPU= int(config['DEFAULT']['N_CPU'])
 
+
+def computeMI(target, img, miFile):
+    (MeasureImageSimilarity['-d', '3',
+                            '-m', 'MI[{},{},1,256]'.format(target, img)] > miFile) & FG
 
 def process(args):
 
@@ -183,6 +188,7 @@ def process(args):
         output= pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')
 
         if not args.space:
+            print(f'Warping {imgPath} to template space ...')
             pool.apply_async(antsApplyTransforms, ('-d', '3',
                                                    '-i', imgPath,
                                                    '-o', output,
@@ -190,6 +196,7 @@ def process(args):
                                                    '-t', warp2tmp, trans2tmp))
 
         else:
+            print(f'Warping {imgPath} to template-->standard space ...')
             pool.apply_async(antsApplyTransforms, ('-d', '3',
                                                    '-i', imgPath,
                                                    '-o', output,
@@ -205,8 +212,14 @@ def process(args):
     modImgsInTarget= glob(pjoin(warpDir, f'*_{args.modality}_to_target.nii.gz'))
     modImgsInTarget= orderCases(modImgsInTarget, cases)
 
+    miFile= None
+    if args.modality=='FA':
+        print(f'Logging MI between warped images {warpDir}/*.nii.gz and target {args.template} ...')
+        miFile= measureSimilarity(modImgsInTarget, cases, args.template, args.logDir, args.ncpu)
+
+
     # obtain modified args from skeletonize() which will be used for other modalities than FA
-    args= skeletonize(modImgsInTarget, cases, args, statsDir, skelDir, args.xfrmDir)
+    args= skeletonize(modImgsInTarget, cases, args, statsDir, skelDir, args.xfrmDir, miFile)
 
     skelImgsInSub= glob(pjoin(skelDir, f'*_{args.modality}_to_target_skel.nii.gz'))
     skelImgsInSub= orderCases(skelImgsInSub, cases)
