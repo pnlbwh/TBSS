@@ -27,7 +27,7 @@ Table of Contents
       * [Step-2: Registration](#step-2-registration)
       * [Step-3: Skeleton creation](#step-3-skeleton-creation)
       * [Step-4: Projection](#step-4-projection)
-      * [Step-5: View results](#step-5-view-results)
+      * [Step-5: View images](#step-5-view-images)
       * [Step-6: ROI/Voxelwise analysis](#step-6-roivoxelwise-analysis)
    * [Branches/Templates](#branchestemplates)
       * [1. --enigma](#1---enigma)
@@ -200,7 +200,7 @@ Each subject diffusivity image is projected upon provided/created skeleton: `{mo
 See `tbss_skeleton --help` for more details about how FA and non-FA images are projected upon skeleton. Also, read [Smith's 
 TBSS 2006](https://www.ncbi.nlm.nih.gov/pubmed/16624579) paper to know more about it.
 
-## Step-5: View results
+## Step-5: View images
 
 TBSS pipeline can generate an HTML file with skeleton overlaid upon the diffusivity measure for all cases.
 
