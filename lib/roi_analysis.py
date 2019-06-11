@@ -11,7 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import load, ConfigParser, FILEDIR, pjoin
+from tbssUtil import load, ConfigParser, FILEDIR, pjoin, RAISE
 import numpy as np
 from conversion import parse_labels, num2str
 import pandas as pd
@@ -105,7 +105,8 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
                     # since we are averaging over R/L only, len(dm) <= 2
                     if len(dm)==2:
                         # average of R/L
-                        df_avg.loc[row] = [common, num2str(np.mean(dm)), str(int(np.sum(num)))]
+                        df_avg.loc[row] = [common, num2str(np.average(dm, weights=num if np.sum(num) else [1,1])),
+                                           str(int(np.sum(num)))]
                         row = row + 1
                         break
 
@@ -125,7 +126,7 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
 
         # subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
         pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
-                                                    roiDir, args.avg))
+                                                    roiDir, args.avg), error_callback=RAISE)
 
     pool.close()
     pool.join()
