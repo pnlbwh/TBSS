@@ -268,7 +268,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
 
     makeDirectory(args.outDir)
 
-    # force creation of log directory
     args.logDir = pjoin(args.outDir, 'log')
     makeDirectory(args.logDir, args.force)
 
