@@ -29,10 +29,6 @@ config.read(pjoin(FILEDIR,'config.ini'))
 N_CPU= int(config['DEFAULT']['N_CPU'])
 
 
-def computeMI(target, img, miFile):
-    (MeasureImageSimilarity['-d', '3',
-                            '-m', 'MI[{},{},1,256]'.format(target, img)] > miFile) & FG
-
 def process(args):
 
     cases= read_cases(args.caselist)
@@ -126,7 +122,7 @@ def process(args):
         check_call((' ').join(['mv', pjoin(modDir, '*.nii.gz'), pjoin(modDir, 'origdata')]), shell= True)
 
     modImgs = glob(pjoin(preprocDir, f'*{args.modality}.nii.gz'))
-
+    modImgs = orderCases(modImgs, cases)
 
     # create template ======================================================================================
     if not args.template and args.modality=='FA':
@@ -137,8 +133,9 @@ def process(args):
         makeDirectory(templateDir, args.force)
 
         antsMultCaselist = pjoin(args.logDir, 'antsMultCaselist.txt')
-        check_call((' ').join(['ls', pjoin(preprocDir, f'*{args.modality}.nii.gz'), '>', antsMultCaselist]),
-                   shell= True)
+        with open(antsMultCaselist, 'w') as f:
+            for imgPath in modImgs:
+                f.write(imgPath+'\n')
 
         # ATTN: antsMultivariateTemplateConstruction2.sh requires '/' at the end of templateDir
         antsMult(antsMultCaselist, templateDir, args.logDir)
