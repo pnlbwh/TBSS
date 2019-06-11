@@ -63,3 +63,7 @@ def makeDirectory(dir, force= False):
         # warn(f'{dir} exists, --force not specified, continuing with existing directory')
     else:
         mkdir(dir)
+
+def RAISE(ERR):
+    raise ERR
+
