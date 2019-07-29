@@ -151,14 +151,13 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
 
     args = parser.parse_args()
 
-    if args.status:
-        from progress import show_progress
-        show_progress(args.verbose)
-        exit()
-
-
     if args.outDir:
         args.outDir = abspath(args.outDir)
+
+    if args.status:
+        from progress import show_progress
+        show_progress(args.outDir, args.verbose)
+        exit()
 
     # if modality is not FA, check if 'transform' directory exists
     # warp and affine will be used from this directory to study non FA images
@@ -174,14 +173,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     # write config file ====================================================================================
     if args.ncpu==-1:
         args.ncpu= cpu_count()
-
-    with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
-        f.write('[DEFAULT]\n')
-        f.write(f'N_CPU = {args.ncpu}\n')
-        f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
-        f.write('verbose = {}\n'.format(1 if args.verbose else 0))
-        f.write(f'outDir= {args.outDir}\n')
-        f.write('modalities = {}\n'.format((',').join(modalities)))
 
 
     # check executables ====================================================================================
@@ -269,7 +260,17 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     makeDirectory(args.outDir)
 
     args.logDir = pjoin(args.outDir, 'log')
-    makeDirectory(args.logDir, args.force)
+    # force overwrite of logDir
+    makeDirectory(args.logDir, True)
+
+    # config file for logging purpose only
+    with open(pjoin(args.logDir, 'config.ini'), 'w') as f:
+        f.write('[DEFAULT]\n')
+        f.write(f'N_CPU = {args.ncpu}\n')
+        f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
+        f.write('verbose = {}\n'.format(1 if args.verbose else 0))
+        f.write(f'outDir= {args.outDir}\n')
+        f.write('modalities = {}\n'.format((',').join(modalities)))
 
     statsDir= pjoin(args.outDir, 'stats')
     makeDirectory(statsDir, args.force)

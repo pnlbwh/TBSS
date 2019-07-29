@@ -18,11 +18,6 @@ import pandas as pd
 from multiprocessing import Pool
 import re
 
-config = ConfigParser()
-config.read(pjoin(FILEDIR,'config.ini'))
-N_CPU = int(config['DEFAULT']['N_CPU'])
-
-
 def average_labels(labels):
 
     commonLabels=[]
@@ -115,7 +110,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         print('Made ', avg_stat_file)
 
 
-def roi_analysis(imgs, cases, args, statsDir, roiDir):
+def roi_analysis(imgs, cases, args, statsDir, roiDir, N_CPU):
 
     intLabels = load(args.labelMap).get_data()
     label2name = parse_labels(np.unique(intLabels)[1:], args.lut)

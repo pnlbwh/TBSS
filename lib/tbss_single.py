@@ -24,10 +24,6 @@ from skeletonize import skeletonize
 from roi_analysis import roi_analysis
 from antsTemplate import antsMult
 
-config = ConfigParser()
-config.read(pjoin(FILEDIR,'config.ini'))
-N_CPU= int(config['DEFAULT']['N_CPU'])
-
 
 def process(args):
 
@@ -138,7 +134,7 @@ def process(args):
                 f.write(imgPath+'\n')
 
         # ATTN: antsMultivariateTemplateConstruction2.sh requires '/' at the end of templateDir
-        antsMult(antsMultCaselist, templateDir, args.logDir)
+        antsMult(antsMultCaselist, templateDir, args.logDir, args.ncpu, args.verbose)
         # TODO: rename the template
         args.template= pjoin(templateDir, 'template0.nii.gz')
 
@@ -152,9 +148,9 @@ def process(args):
         if args.modality=='FA':
             print(f'Registering FA images to {args.template} space ..')
             makeDirectory(args.xfrmDir, True)
-            pool= Pool(N_CPU)
+            pool= Pool(args.ncpu)
             for c, imgPath in zip(cases, modImgs):
-                pool.apply_async(antsReg, (args.template, imgPath, pjoin(args.xfrmDir, f'{c}_FA'), args.logDir))
+                pool.apply_async(antsReg, (args.template, imgPath, pjoin(args.xfrmDir, f'{c}_FA'), args.logDir, args.verbose))
 
             pool.close()
             pool.join()
@@ -169,7 +165,7 @@ def process(args):
         trans2space = outPrefix + '0GenericAffine.mat'
         if not isfile(warp2space):
             print(f'Registering {args.template} to the space of {args.space} ...')
-            antsReg(args.space, args.template, outPrefix, args.logDir)
+            antsReg(args.space, args.template, outPrefix, args.logDir, args.verbose)
 
         # TODO: rename the template
         args.template = outPrefix + 'Warped.nii.gz'
@@ -221,7 +217,7 @@ def process(args):
 
     # roi based analysis
     if args.labelMap:
-        roi_analysis(skelImgsInSub, cases, args, statsDir, roiDir)
+        roi_analysis(skelImgsInSub, cases, args, statsDir, roiDir, args.ncpu)
 
     return args
 

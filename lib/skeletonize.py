@@ -213,7 +213,6 @@ Note: Replace all the above directories with absolute paths.\n\n''')
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, imgs):
 
-        # res.append(project_skeleton(imgPath, c, args, meanFA, skelDir))
         res.append(pool.apply_async(project_skeleton, (c, imgPath, args, meanFA, skelDir)))
 
 
