@@ -1,18 +1,29 @@
-from tbssUtil import pjoin, RAISE
-from plumbum.cmd import MeasureImageSimilarity, head, cut
+from tbssUtil import pjoin, RAISE, environ
+from plumbum.cmd import antsRegistration, MeasureImageSimilarity, head, cut
 from plumbum import FG
 from multiprocessing import Pool
 
+# determine ANTS_VERSION
+# $ antsRegistration --version
+#   ANTs Version: 2.2.0.dev233-g19285
+#   Compiled: Sep  2 2018 23:23:33
+
+antsVerFile='/tmp/ANTS_VERSION_'+environ['USER']
+if not antsVerFile:
+    (antsRegistration['--version'] > antsVerFile) & FG
+
+with open(antsVerFile) as f:
+      content=f.read().split('\n')
+      ANTS_VERSION= content[0].split()[-1]
+
 def computeMI(target, img, miFile):
-    # $ antsRegistration --version
-    # 2.2.0
-    (MeasureImageSimilarity['-d', '3',
-                            '-m', 'MI[{},{},1,256]'.format(target, img)] > miFile) & FG
 
+    if ANTS_VERSION <= '2.1.0':
+        (MeasureImageSimilarity['3', '2', target, img] | head['-n', '-2'] | cut['-d ', '-f6'] > miFile)()
 
-    # $ antsRegistration --version
-    # 2.1.0
-    # (MeasureImageSimilarity['3', '2', target, img] | head['-n', '-2'] | cut['-d ', '-f6'] > miFile)()
+    else:
+        (MeasureImageSimilarity['-d', '3', '-m', 'MI[{},{},1,256]'.format(target, img)] > miFile) & FG
+
 
 def measureSimilarity(imgs, cases, target, logDir, ncpu):
 
