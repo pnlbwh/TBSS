@@ -155,6 +155,9 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         args.outDir = abspath(args.outDir)
 
     if args.status:
+        if not args.outDir:
+            raise ValueError('Design of this program has changed. Provide --outDir with --status to check progress')
+
         from progress import show_progress
         show_progress(args.outDir, args.verbose)
         exit()
@@ -260,8 +263,8 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     makeDirectory(args.outDir)
 
     args.logDir = pjoin(args.outDir, 'log')
-    # force overwrite of logDir
-    makeDirectory(args.logDir, True)
+    # we cannot overwrite logDir, because previous FA modality log can be there, so give control to the user
+    makeDirectory(args.logDir, args.force)
 
     # config file for logging purpose only
     with open(pjoin(args.logDir, 'config.ini'), 'w') as f:
