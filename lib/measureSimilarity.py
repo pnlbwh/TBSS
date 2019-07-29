@@ -2,6 +2,7 @@ from tbssUtil import pjoin, RAISE, environ
 from plumbum.cmd import antsRegistration, MeasureImageSimilarity, head, cut
 from plumbum import FG
 from multiprocessing import Pool
+import numpy as np
 
 # determine ANTS_VERSION
 # $ antsRegistration --version
@@ -38,24 +39,27 @@ def measureSimilarity(imgs, cases, target, logDir, ncpu):
 
     summaryCsv = pjoin(logDir, 'similarity.csv')
 
-    mis = []
-    with open(summaryCsv, 'w') as fw:
-        for c in cases:
-                with open(pjoin(logDir, f'{c}_MI.txt')) as f:
-                    mi = f.read().strip()
-                    fw.write(c+ ',' + mi + '\n')
-                    mis.append(float(mi))
-
-
     # mis = []
-    # for c in cases:
-    #     with open(pjoin(logDir, f'{c}.txt')) as f:
-    #         mi = f.read().strip()
-    #         mis.append(float(mi))
-    #
     # with open(summaryCsv, 'w') as fw:
-    #     for i in np.argsort(mis):
-    #         fw.write(cases[i] + ',' + str(mis[i]) + '\n')
+    #     for c in cases:
+    #             with open(pjoin(logDir, f'{c}_MI.txt')) as f:
+    #                 mi = f.read().strip()
+    #                 fw.write(c+ ',' + mi + '\n')
+    #                 mis.append(float(mi))
+
+
+    print('The lower the MI, the better is the quality of registration. '
+          f'Hence {summaryCsv} notes cases in ascending order of MI.')
+
+    mis = []
+    for c in cases:
+        with open(pjoin(logDir, f'{c}_MI.txt')) as f:
+            mi = f.read().strip()
+            mis.append(float(mi))
+
+    with open(summaryCsv, 'w') as fw:
+        for i in np.argsort(mis):
+            fw.write(cases[i] + ',' + str(mis[i]) + '\n')
 
 
     return summaryCsv
