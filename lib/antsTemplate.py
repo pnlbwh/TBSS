@@ -12,13 +12,8 @@
 # ===============================================================================
 
 from tbssUtil import *
-config = ConfigParser()
-config.read(pjoin(FILEDIR,'config.ini'))
-N_proc= config['DEFAULT']['N_CPU']
-verbose= int(config['DEFAULT']['verbose'])
 
-
-def antsMult(caselist, outPrefix, logDir):
+def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
 
     if verbose:
         f= sys.stdout
@@ -40,7 +35,7 @@ def antsMult(caselist, outPrefix, logDir):
                            caselist]), shell= True, stdout= f, stderr= sys.stdout)
 
 
-def antsReg(fixedImg, movingImg, outPrefix, logDir):
+def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
 
     if verbose:
         f= sys.stdout
@@ -49,6 +44,8 @@ def antsReg(fixedImg, movingImg, outPrefix, logDir):
         f= open(logFile, 'w')
 
     print(f'fixedImage: {fixedImg}, movingImage: {movingImg}')
+    # $ antsRegistration --version
+    # 2.1.0
     check_call((' ').join(['antsRegistrationSyNQuick.sh',
                            '-d', '3',
                            '-f', fixedImg,
