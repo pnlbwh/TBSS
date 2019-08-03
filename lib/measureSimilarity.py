@@ -1,4 +1,4 @@
-from tbssUtil import pjoin, RAISE, environ
+from tbssUtil import pjoin, RAISE, environ, isfile
 from plumbum.cmd import antsRegistration, MeasureImageSimilarity, head, cut
 from plumbum import FG
 from multiprocessing import Pool
@@ -10,7 +10,7 @@ import numpy as np
 #   Compiled: Sep  2 2018 23:23:33
 
 antsVerFile='/tmp/ANTS_VERSION_'+environ['USER']
-if not antsVerFile:
+if not isfile(antsVerFile):
     (antsRegistration['--version'] > antsVerFile) & FG
 
 with open(antsVerFile) as f:
