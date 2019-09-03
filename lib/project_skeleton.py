@@ -49,7 +49,7 @@ def project_skeleton(c, imgPath, args, meanFA, skelDir):
                               '-i', meanFA,
                               '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
                               imgPath, modImgSkel,
-                              '-s', args.templateMask]),
+                              '-s', args.skeletonMask]),
                               shell= True)
 
     else:
@@ -59,7 +59,7 @@ def project_skeleton(c, imgPath, args, meanFA, skelDir):
                               '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
                               pjoin(args.outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
                               modImgSkel, '-a', imgPath,
-                              '-s', args.templateMask]),
+                              '-s', args.skeletonMask]),
                               shell= True)
 
 
