@@ -229,6 +229,7 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         args.skeleton = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton.nii.gz')
         args.skeletonMask = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask.nii.gz')
         args.skeletonMaskDst = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask_dst.nii.gz')
+        args.SKEL_THRESH = 0.049
 
         args.lut = pjoin(enigmaDir, 'ENIGMA_look_up_table.txt')
         args.labelMap = pjoin(fslDataDir, 'atlases', 'JHU', 'JHU-ICBM-labels-1mm.nii.gz')
