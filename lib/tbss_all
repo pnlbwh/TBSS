@@ -15,7 +15,7 @@
 
 import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
-    dirname, abspath, environ, copyfile, warn
+    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
@@ -236,6 +236,39 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
 
 
+    makeDirectory(args.outDir)
+
+    statsDir = pjoin(args.outDir, 'stats')
+    makeDirectory(statsDir, args.force)
+
+
+    # copy templates to stat directory with a softlink of proper name
+    CWD= getcwd()
+    chdir(statsDir)
+
+    # just copy template
+    if args.template:
+        check_call(f'cp {args.template} .', shell=True)
+
+    # softlink the rest
+    if args.templateMask:
+        check_call(f'cp {args.templateMask} .', shell= True)
+        check_call(f'ln -s {basename(args.templateMask)} mean_FA_mask.nii.gz', shell= True)
+
+    if args.skeleton:
+        check_call(f'cp {args.skeleton} .', shell= True)
+        check_call(f'ln -s {basename(args.skeleton)} mean_FA_skeleton.nii.gz', shell= True)
+
+    if args.skeletonMask:
+        check_call(f'cp {args.skeletonMask} .', shell= True)
+        check_call(f'ln -s {basename(args.skeletonMask)} mean_FA_skeleton_mask.nii.gz', shell= True)
+
+    if args.skeletonMaskDst:
+        check_call(f'cp {args.skeletonMaskDst} .', shell= True)
+        check_call(f'ln -s {basename(args.skeletonMaskDst)} mean_FA_skeleton_mask_dst.nii.gz', shell= True)
+
+
+    chdir(CWD)
 
     # organize images into different directories ===========================================================
 
@@ -260,7 +293,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     # save all ROI statistics, mean, and combined images
 
 
-    makeDirectory(args.outDir)
 
     args.logDir = pjoin(args.outDir, 'log')
     # we cannot overwrite logDir, because previous FA modality log can be there, so give control to the user
@@ -275,8 +307,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         f.write(f'outDir= {args.outDir}\n')
         f.write('modalities = {}\n'.format((',').join(modalities)))
 
-    statsDir= pjoin(args.outDir, 'stats')
-    makeDirectory(statsDir, args.force)
 
     num_modalities= len(modalities)
 
