@@ -134,10 +134,9 @@ Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
 If you have a good number of cases to process, and you would like to know how far the pipeline has progressed, 
 do the following:
 
-    lib/tbss_all --status
+    lib/tbss_all --status --outDir ~/userTemplateOutput/
 
-The `--status` command uses information from `lib/confing.ini` to collect information about the ongoing TBSS study. 
-It will print a dashboard like below:
+The `--status` command uses information from `outDir/log/config.ini` to collect information about the ongoing TBSS study. It will print a dashboard like below:
 
     Output directory:               ~/my_output_directory
     Number of cases to process:     228
