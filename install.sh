@@ -143,7 +143,6 @@ popd
 
 # --enigma branch ==========================================
 echo Testing --enigma branch ...
-
 $libDir/tbss_all -i $IMAGELIST --generate \
 -c $CASELIST \
 --modality FA,MD,AD,RD --enigma \
@@ -152,6 +151,7 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 || echo --enigma branch execution FAILED
 
 
+# read
 # pushd .
 # cd $SCRIPTDIR
 # python -m unittest -v $testDir/"test_enigma.py"
@@ -171,10 +171,15 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 popd
 
 
+# read
 # pushd .
 # cd $SCRIPTDIR
 # python -m unittest -v $testDir/"test_fmrib.py"
 # popd
+
+
+# env variable for reproducing template
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 
 
 # --studyTemplate branch ==================================
@@ -193,6 +198,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 popd
 
 
+# read
 # pushd .
 # cd $SCRIPTDIR
 # python -m unittest -v $testDir/"test_study.py"

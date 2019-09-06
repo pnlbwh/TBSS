@@ -12,9 +12,6 @@
 # ===============================================================================
 
 from tbssUtil import *
-config = ConfigParser()
-config.read(pjoin(FILEDIR,'config.ini'))
-diffusionMeasures= [x for x in config['DEFAULT']['diffusionMeasures'].split(',')]
 
 def dti(imgPath, maskPath, inPrefix, outPrefix, tool= 'DIPY', cost_func='LS'):
 

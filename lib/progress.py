@@ -7,11 +7,10 @@ from datetime import datetime
 from loadFiles import read_time
 
 
-def show_progress(verbose= False):
+def show_progress(outDir, verbose= False):
 
-    config = ConfigParser()
-    config.read(pjoin(FILEDIR, 'config.ini'))
-    outDir = config['DEFAULT']['outDir']
+    config= ConfigParser()
+    config.read(pjoin(outDir, 'log', 'config.ini'))
     modalities= [x for x in config['DEFAULT']['modalities'].split(',')]
 
     # read caselist

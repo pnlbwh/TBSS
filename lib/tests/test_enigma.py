@@ -20,7 +20,7 @@ import numpy as np
 OUT_DIR= pjoin(FILEDIR,'enigmaTemplateOutput','stats')
 REF_DIR= pjoin(TEST_DATA_DIR,'enigma_res')
 
-class TestFmrib(unittest.TestCase):
+class TestEnigma(unittest.TestCase):
 
     print('Test ENIGMA branch results')
 

@@ -86,21 +86,27 @@ not to be in the same directory. Rather, they can be anywhere in your machine. J
 path to the diffusivity image in designated column of `IMAGELIST.csv`. See details in [ENIGMA branch](#1---enigma).
 
 **NOTE** For multi-modality like above, make sure to have FA as the first one.
+
+**NOTE** If you don't specify a `CASELIST.txt`, base names for image files are used as caseIDs. However, if you are doing multi-modality TBSS, 
+you wouldn't have the luxury of omitting the caselist.
+
     
 ## 2. Run user template based TBSS
     
     lib/tbss_all -i FAimageDIR,MDimageDIR \
     --modality FA,MD \
+    -c CASELIST.txt \
     --template your_FA.nii.gz \
     --skeleton your_skeleton_FA.nii.gz \
     -o ~/userTemplateOutput/
 
 Alternative to the `IMAGELIST.csv`, you can specify a directory corresponding to each modality you want to analyze. 
-However, you have to copy your diffusivity images in a directory. Yet, we are giving you the liberty of having any name 
-for the diffusivity images (it doesn't require to start with caseid/have keyword "FA" in the filename).
+However, you have to copy your diffusivity images in a directory. In the very least, the images across `FAimageDIR,MDimageDIR` 
+should have caseID from `CASELIST.txt` somewhere in their file names. But it doesn't need to have keyword "FA/MD" in their file names.
 
-Also, as you notice, we didn't specify a `CASELIST.txt`. Then, file names are used as case IDs. `your_FA.nii.gz` and 
-`your_skeleton_FA.nii.gz` are your templates. See details in [User template branch](#4-user-template).
+On the other hand, `your_FA.nii.gz` and `your_skeleton_FA.nii.gz` are the templates you should provide. 
+See details in [User template branch](#4-user-template).
+
 
 ## 3. Minimum TBSS
     
@@ -128,10 +134,9 @@ Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
 If you have a good number of cases to process, and you would like to know how far the pipeline has progressed, 
 do the following:
 
-    lib/tbss_all --status
+    lib/tbss_all --status --outDir ~/userTemplateOutput/
 
-The `--status` command uses information from `lib/confing.ini` to collect information about the ongoing TBSS study. 
-It will print a dashboard like below:
+The `--status` command uses information from `outDir/log/config.ini` to collect information about the ongoing TBSS study. It will print a dashboard like below:
 
     Output directory:               ~/my_output_directory
     Number of cases to process:     228

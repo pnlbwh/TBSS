@@ -15,7 +15,7 @@
 
 import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
-    dirname, abspath, environ, copyfile, warn
+    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
@@ -151,14 +151,16 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
 
     args = parser.parse_args()
 
-    if args.status:
-        from progress import show_progress
-        show_progress(args.verbose)
-        exit()
-
-
     if args.outDir:
         args.outDir = abspath(args.outDir)
+
+    if args.status:
+        if not args.outDir:
+            raise ValueError('Design of this program has changed. Provide --outDir with --status to check progress')
+
+        from progress import show_progress
+        show_progress(args.outDir, args.verbose)
+        exit()
 
     # if modality is not FA, check if 'transform' directory exists
     # warp and affine will be used from this directory to study non FA images
@@ -174,14 +176,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     # write config file ====================================================================================
     if args.ncpu==-1:
         args.ncpu= cpu_count()
-
-    with open(pjoin(FILEDIR, 'config.ini'), 'w') as f:
-        f.write('[DEFAULT]\n')
-        f.write(f'N_CPU = {args.ncpu}\n')
-        f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
-        f.write('verbose = {}\n'.format(1 if args.verbose else 0))
-        f.write(f'outDir= {args.outDir}\n')
-        f.write('modalities = {}\n'.format((',').join(modalities)))
 
 
     # check executables ====================================================================================
@@ -242,6 +236,39 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
 
 
+    makeDirectory(args.outDir)
+
+    statsDir = pjoin(args.outDir, 'stats')
+    makeDirectory(statsDir, args.force)
+
+
+    # copy templates to stat directory with a softlink of proper name
+    CWD= getcwd()
+    chdir(statsDir)
+
+    # just copy template
+    if args.template:
+        check_call(f'cp {args.template} .', shell=True)
+
+    # softlink the rest
+    if args.templateMask:
+        check_call(f'cp {args.templateMask} .', shell= True)
+        check_call(f'ln -s {basename(args.templateMask)} mean_FA_mask.nii.gz', shell= True)
+
+    if args.skeleton:
+        check_call(f'cp {args.skeleton} .', shell= True)
+        check_call(f'ln -s {basename(args.skeleton)} mean_FA_skeleton.nii.gz', shell= True)
+
+    if args.skeletonMask:
+        check_call(f'cp {args.skeletonMask} .', shell= True)
+        check_call(f'ln -s {basename(args.skeletonMask)} mean_FA_skeleton_mask.nii.gz', shell= True)
+
+    if args.skeletonMaskDst:
+        check_call(f'cp {args.skeletonMaskDst} .', shell= True)
+        check_call(f'ln -s {basename(args.skeletonMaskDst)} mean_FA_skeleton_mask_dst.nii.gz', shell= True)
+
+
+    chdir(CWD)
 
     # organize images into different directories ===========================================================
 
@@ -266,13 +293,20 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     # save all ROI statistics, mean, and combined images
 
 
-    makeDirectory(args.outDir)
 
     args.logDir = pjoin(args.outDir, 'log')
+    # we cannot overwrite logDir, because previous FA modality log can be there, so give control to the user
     makeDirectory(args.logDir, args.force)
 
-    statsDir= pjoin(args.outDir, 'stats')
-    makeDirectory(statsDir, args.force)
+    # config file for logging purpose only
+    with open(pjoin(args.logDir, 'config.ini'), 'w') as f:
+        f.write('[DEFAULT]\n')
+        f.write(f'N_CPU = {args.ncpu}\n')
+        f.write('diffusionMeasures = {}\n'.format((',').join(diffusionMeasures)))
+        f.write('verbose = {}\n'.format(1 if args.verbose else 0))
+        f.write(f'outDir= {args.outDir}\n')
+        f.write('modalities = {}\n'.format((',').join(modalities)))
+
 
     num_modalities= len(modalities)
 

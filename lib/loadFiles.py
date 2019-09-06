@@ -28,6 +28,7 @@ def write_caselist(logDir, List=None, Dir=None):
 
     if Dir is not None:
         imgs= glob(pjoin(Dir, '*.nii.gz'))
+        imgs.sort()
 
     elif List is not None:
         try:
