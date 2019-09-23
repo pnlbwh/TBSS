@@ -502,7 +502,33 @@ corresponding input images are FA.
 
 However, if you wish to run FA first and then other modalities in future, use option (iv) from above. There, you should 
 provide the directory containing warp/affine obtained during registration of subject FA to the template/standard space. 
-This way, we bypass doing the same non-linear registration once again.
+This way, we bypass doing the same non-linear registration once again. In addition, provide any templates created 
+during FA TBSS.Here are a few sample commands for running separate nonFA TBSS:
+
+    
+**partial** `--engima` TBSS
+    
+    $libDir/tbss_all -i MD/origdata,RD/origdata \
+    -c $CASELIST \                                      # same caselist that was used for FA TBSS
+    --xfrmDir $testDir/enigmaTemplateOutput/transform \ # transform files are obtained from here
+    --modality MD,RD --enigma \                         # --enigma tells to use enigma templates
+    --avg                                               # -o is not required
+
+
+
+**partial** `--studyTemplate` TBSS
+
+    $libDir/tbss_all -i AD/origdata \
+    -c $CASELIST \
+    --xfrmDir $testDir/studyTemplateOutput/template \
+    --modality AD \
+    --template $testDir/studyTemplateOutput/template/template0.nii.gz \     # provide created templates 
+    --templateMask $testDir/studyTemplateOutput/stats/mean_FA_mask.nii.gz \
+    --skeleton $testDir/studyTemplateOutput/stats/mean_FA_skeleton.nii.gz \
+    --skeletonMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
+    --skeletonMaskDst $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask_dst.nii.gz \
+    -s $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz \                        # provide space defining image if wanted
+    -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \                # provide atlas if wanted
 
 
 # List creation
