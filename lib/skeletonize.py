@@ -11,7 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool
+from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit
 import numpy as np
 from project_skeleton import project_skeleton
 
@@ -212,8 +212,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
     allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, imgs):
-
-        res.append(pool.apply_async(project_skeleton, (c, imgPath, args, meanFA, skelDir)))
+            res.append(pool.apply_async(project_skeleton, (c, imgPath, args, skelDir)))
 
 
     for i,r in enumerate(res):
