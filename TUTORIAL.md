@@ -642,7 +642,7 @@ Finally, if needed, you can copy the transform files in the [transform](#ii-tran
 Processing can be multi-threaded over the cases. Besides, `antsMultivariateTemplateConstruction2.sh` utilizes 
 multiple threads to speed-up template construction. 
 
-    --nproc 8 # default is 4, use -1 for all available
+    --ncpu 8 # default is 4, use -1 for all available
    
 However, multi-threading comes with a price of slowing down other processes that may be running in your system. So, it 
 is advisable to leave out at least two cores for other processes to run smoothly.
