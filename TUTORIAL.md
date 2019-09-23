@@ -265,6 +265,10 @@ as follows:
     --labelMap atlas.nii.gz --space MNI.nii.gz
     
 
+Unlike [original TBSS](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide) approach, we use the [ENIGMA](http://enigma.ini.usc.edu/wp-content/uploads/DTI_Protocols/ENIGMA_ROI_protocol_USC.pdf) approach 
+that identifies the direction of projection onto the skeleton based on the individual FA maps rather than on the mean FA map.
+
+
 ## 3. --studyTemplate
 
 With this branch, a study-specific template is created using `antsMultivariateTemplateConstruction2.sh`. 
