@@ -19,7 +19,6 @@ from orderCases import orderCases
 from glob import glob
 from plumbum.cmd import antsApplyTransforms, fslmaths
 from measureSimilarity import measureSimilarity
-from plumbum import FG
 from skeletonize import skeletonize
 from roi_analysis import roi_analysis
 from antsTemplate import antsMult

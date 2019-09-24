@@ -35,6 +35,11 @@ def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
                            caselist]), shell= True, stdout= f, stderr= sys.stdout)
 
 
+    if f.name!='<sys.stdout>':
+        f.close()
+
+
+
 def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
 
     if verbose:
@@ -54,3 +59,6 @@ def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
                            '-o', outPrefix,
                            '-e', '123456']), shell=True, stdout= f, stderr= sys.stdout)
 
+
+    if f.name!='<sys.stdout>':
+        f.close()
