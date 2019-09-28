@@ -204,6 +204,28 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         raise AttributeError('--skeletonMask and/or --skeletonMaskDst is invalid w/o --skeleton')
 
 
+    # take absolute path for everything
+    if args.caselist:
+        args.caselist = abspath(args.caselist)
+    if args.template:
+        args.template = abspath(args.template)
+    if args.templateMask:
+        args.templateMask = abspath(args.templateMask)
+    if args.skeleton:
+        args.skeleton = abspath(args.skeleton)
+    if args.skeletonMask:
+        args.skeletonMask = abspath(args.skeletonMask)
+    if args.skeletonMaskDst:
+        args.skeletonMaskDst = abspath(args.skeletonMaskDst)
+    if args.space:
+        args.space = abspath(args.space)
+    if args.labelMap:
+        args.labelMap = abspath(args.labelMap)
+    if args.lut:
+        args.lut = abspath(args.lut)
+    if args.SEARCH_RULE_MASK:
+        args.SEARCH_RULE_MASK = abspath(args.SEARCH_RULE_MASK)
+
     if args.studyTemplate:
         # clear all template arguments
         print('--study template specified, overriding any provided templates')
@@ -247,23 +269,23 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     chdir(statsDir)
 
     # just copy template
-    if args.template:
+    if args.template and not isfile(args.template):
         check_call(f'cp {args.template} .', shell=True)
 
     # softlink the rest
-    if args.templateMask:
+    if args.templateMask and not isfile(args.templateMask):
         check_call(f'cp {args.templateMask} .', shell= True)
         check_call(f'ln -s {basename(args.templateMask)} mean_FA_mask.nii.gz', shell= True)
 
-    if args.skeleton:
+    if args.skeleton and not isfile(args.skeleton):
         check_call(f'cp {args.skeleton} .', shell= True)
         check_call(f'ln -s {basename(args.skeleton)} mean_FA_skeleton.nii.gz', shell= True)
 
-    if args.skeletonMask:
+    if args.skeletonMask and not isfile(args.skeletonMask):
         check_call(f'cp {args.skeletonMask} .', shell= True)
         check_call(f'ln -s {basename(args.skeletonMask)} mean_FA_skeleton_mask.nii.gz', shell= True)
 
-    if args.skeletonMaskDst:
+    if args.skeletonMaskDst and not isfile(args.skeletonMaskDst):
         check_call(f'cp {args.skeletonMaskDst} .', shell= True)
         check_call(f'ln -s {basename(args.skeletonMaskDst)} mean_FA_skeleton_mask_dst.nii.gz', shell= True)
 
@@ -349,7 +371,7 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
             # the following generates a warning since dirs are already created in Ln:247-249
             makeDirectory(measureDir, args.force)
 
-        dwImgs, masks= read_imgs_masks(args.input)
+        dwImgs, masks= read_imgs_masks(abspath(args.input))
         if not args.caselist:
             # generate caselist
             args.caselist, cases= write_caselist(args.logDir, List=dwImgs)
@@ -369,7 +391,7 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
 
     # when input is a modality image list
     elif isfile(args.input):
-        allModImgs = read_imgs(args.input, num_modalities)
+        allModImgs = read_imgs(abspath(args.input), num_modalities)
         if not args.caselist:
             # generate caselist
             args.caselist, cases= write_caselist(args.logDir, List=allModImgs)
