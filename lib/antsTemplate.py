@@ -12,13 +12,8 @@
 # ===============================================================================
 
 from tbssUtil import *
-config = ConfigParser()
-config.read(pjoin(FILEDIR,'config.ini'))
-N_proc= config['DEFAULT']['N_CPU']
-verbose= int(config['DEFAULT']['verbose'])
 
-
-def antsMult(caselist, outPrefix, logDir):
+def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
 
     if verbose:
         f= sys.stdout
@@ -28,7 +23,7 @@ def antsMult(caselist, outPrefix, logDir):
         print(f'See {logFile} for details of template construction')
 
 
-    check_call((' ').join(['antsMultivariateTemplateConstruction2.sh',
+    check_call((' ').join([pjoin(FILEDIR, 'antsMultivariateTemplateConstruction2_fixed_random_seed.sh'),
                            '-d', '3',
                            '-g', '0.2',
                            '-t', "BSplineSyN[0.1,26,0]",
@@ -40,7 +35,12 @@ def antsMult(caselist, outPrefix, logDir):
                            caselist]), shell= True, stdout= f, stderr= sys.stdout)
 
 
-def antsReg(fixedImg, movingImg, outPrefix, logDir):
+    if f.name!='<sys.stdout>':
+        f.close()
+
+
+
+def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
 
     if verbose:
         f= sys.stdout
@@ -49,10 +49,16 @@ def antsReg(fixedImg, movingImg, outPrefix, logDir):
         f= open(logFile, 'w')
 
     print(f'fixedImage: {fixedImg}, movingImage: {movingImg}')
+    # use of -e (--random-seed) requires
+    # $ antsRegistration --version
+    # 2.2.0
     check_call((' ').join(['antsRegistrationSyNQuick.sh',
                            '-d', '3',
                            '-f', fixedImg,
                            '-m', movingImg,
                            '-o', outPrefix,
-                           '-n', '8']), shell=True, stdout= f, stderr= sys.stdout)
+                           '-e', '123456']), shell=True, stdout= f, stderr= sys.stdout)
 
+
+    if f.name!='<sys.stdout>':
+        f.close()

@@ -74,16 +74,15 @@ Follow the [instruction](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation)
 
 ### iv. ANTs
 
-(*Preferred*) You should install pre-complied ANTs from [Aramislab](https://anaconda.org/Aramislab/ants):
+(*Preferred*) You should install pre-complied ANTs from [PNL-BWH](https://anaconda.org/pnlbwh/ants):
     
-    conda install -c aramislab ants
+    conda install -c pnlbwh ants
     
 Installation with conda is more manageable. It will put the ANTs commands/scripts in your path when you do:
     
-    source ~/miniconda3/bin/activate
-    
+    source ~/miniconda3/bin/activate    
 
-Alternatively, you can build ANTs from [source](https://github.com/ANTsX/ANTs).
+Alternatively, you can build ANTs from [source](https://github.com/ANTsX/ANTs). 
 
     
 ## 2. Install pipeline
@@ -114,9 +113,11 @@ If any of them does not exist, add that to your path:
 
     export PATH=$PATH:/directory/of/executable
     
-ANTs commands should be in `~/miniconda3/pkgs/ants-2.2.0-0/bin` and/or `~/miniconda3/bin/` directories. 
-If they are not in your path already, use export `PATH=$PATH:~/miniconda3/pkgs/ants-2.2.0-0/bin` 
-to put all the commands in your path. Additionally, you should define define [ANTSPATH](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS#set-path-and-antspath)
+ANTs commands should be in `~/miniconda3/pkgs/ants-2.3.0-py3/bin` and/or `~/miniconda3/bin` directories. 
+If they are not in your path already, use export `PATH=$PATH:~/miniconda3/pkgs/ants-2.3.0-py3/bin` 
+to put all the commands in your path. Additionally, you should define define [ANTSPATH](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS#set-path-and-antspath):
+
+    export ANTSPATH=~/miniconda3/bin
 
 
 # Running

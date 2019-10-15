@@ -14,7 +14,7 @@
 from tbssUtil import pjoin, load, check_call
 
 
-def project_skeleton(c, imgPath, args, meanFA, skelDir):
+def project_skeleton(c, imgPath, args, skelDir):
 
     '''
     Part of FSL (ID: 5.0.11)
@@ -46,18 +46,20 @@ def project_skeleton(c, imgPath, args, meanFA, skelDir):
     if args.modality == 'FA':
 
         check_call((' ').join(['tbss_skeleton',
-                              '-i', meanFA,
+                              '-i', imgPath,
                               '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
-                              imgPath, modImgSkel]),
+                              imgPath, modImgSkel,
+                              '-s', args.skeletonMask]),
                               shell= True)
 
     else:
 
         check_call((' ').join(['tbss_skeleton',
-                              '-i', meanFA,
+                              '-i', imgPath,
                               '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
                               pjoin(args.outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
-                              modImgSkel, '-a', imgPath]),
+                              modImgSkel, '-a', imgPath,
+                              '-s', args.skeletonMask]),
                               shell= True)
 
 

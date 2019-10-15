@@ -11,7 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool
+from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit
 import numpy as np
 from project_skeleton import project_skeleton
 
@@ -67,7 +67,7 @@ def calc_mean(imgs, shape, qc):
     return (allFAdata, cumsumFA)
 
 
-def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir, miFile):
+def skeletonize(imgs, cases, args, statsDir, skelDir, miFile):
 
     target= load(args.template)
     targetData= target.get_data()
@@ -97,7 +97,7 @@ It might be helpful to re-run registration for warped images that are bad.
 
 Moving images are   :   {args.outDir}/preproc/
 Target is           :   {args.template}
-Transform files are :   {xfrmDir}/
+Transform files are :   {args.xfrmDir}/
 Warped images are   :   {args.outDir}/warped/
 
 Save any re-registered images in {args.outDir}/warped/ with the same name as before
@@ -212,9 +212,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
     allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, imgs):
-
-        # res.append(project_skeleton(imgPath, c, args, meanFA, skelDir))
-        res.append(pool.apply_async(project_skeleton, (c, imgPath, args, meanFA, skelDir)))
+            res.append(pool.apply_async(project_skeleton, (c, imgPath, args, skelDir)))
 
 
     for i,r in enumerate(res):

@@ -99,17 +99,18 @@ def generate_ss(modDir, ssDir, cases, ncpu):
 def main():
 
     parser = argparse.ArgumentParser(description='Generates an HTML file with skeleton overlaid upon the diffusivity measure '
-                                                 'i.e. FA,MD,AD,RD etc')
+                                                 'i.e. FA,MD,AD,RD etc', formatter_class= argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-d','--dir', type=str, help='TBSS output directory where results are stored in --modality sudirectory; '
-                                                   'you should have write permission into the directories')
+    parser.add_argument('-d','--dir', type=str, default=argparse.SUPPRESS,
+                        help='TBSS output directory where results are stored in --modality sudirectory; '
+                             'you should have write permission into the directories')
 
     parser.add_argument('-m','--modality', type=str, default='FA', help='Modality={FA,MD,AD,RD,...} of images')
-    parser.add_argument('-c','--caselist', type=str, help='caseIds from the caselist are used to label screenshots, '
-                                                     'default: outDir/log/caselist.txt')
+    parser.add_argument('-c','--caselist', type=str, default=argparse.SUPPRESS,
+                        help='caseIds from the caselist are used to label screenshots, default: outDir/log/caselist.txt')
 
-    parser.add_argument('-n','--ncpu', type= int, help='number of threads to use, if other processes in your computer '
-                        'becomes sluggish/you run into memory error, reduce --nproc', default= 4)
+    parser.add_argument('-n','--ncpu', type= int, default=4, help='number of threads to use, if other processes in your computer '
+                        'becomes sluggish/you run into memory error, reduce --nproc')
 
 
     args = parser.parse_args()
