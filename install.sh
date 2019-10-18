@@ -246,7 +246,7 @@ popd
 # run all unittests together ==============================
 pushd .
 cd $SCRIPTDIR
-python -m unittest -v $testDir/test_*
+pytest --show-capture=stderr $testDir/test_*
 popd
 
 echo Testing complete.
