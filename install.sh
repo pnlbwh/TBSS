@@ -243,7 +243,7 @@ $libDir/tbss_all -i AD/origdata,RD/origdata \
 popd
 
 
-
+# run all unittests together ==============================
 pushd .
 cd $SCRIPTDIR
 pytest -v $estDir/test_*
