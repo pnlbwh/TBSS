@@ -243,6 +243,12 @@ $libDir/tbss_all -i AD/origdata,RD/origdata \
 popd
 
 
+
+pushd .
+cd $SCRIPTDIR
+pytest -v $estDir/test_*
+popd .
+
 echo Testing complete.
 
 }
