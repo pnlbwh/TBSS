@@ -247,7 +247,7 @@ popd
 pushd .
 cd $SCRIPTDIR
 pytest -v $estDir/test_*
-popd .
+popd
 
 echo Testing complete.
 
