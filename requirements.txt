@@ -6,4 +6,5 @@ psutil
 plumbum
 pandas
 pynrrd
+pytest
 git+https://github.com/pnlbwh/conversion.git

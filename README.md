@@ -146,7 +146,7 @@ Running the tests should take less than an hour.
 
 You may run smaller and faster unit tests as follows.
     
-    python -m unittest -v lib/tests/test_*.py
+    pytest -v lib/tests/test_*.py
     
 **NOTE** In the current release, unit tests are dependant upon the outputs of whole pipeline test. 
 This is likely to change in future. 

@@ -14,7 +14,7 @@
 # ===============================================================================
 
 import pandas as pd
-from .util import *
+from util import *
 import numpy as np
 
 OUT_DIR= pjoin(FILEDIR,'enigmaTemplateOutput','stats')
