@@ -246,7 +246,7 @@ popd
 # run all unittests together ==============================
 pushd .
 cd $SCRIPTDIR
-pytest -v $estDir/test_*
+pytest -v $testDir/test_*
 popd
 
 echo Testing complete.
