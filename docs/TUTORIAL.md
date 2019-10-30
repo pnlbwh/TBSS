@@ -1,4 +1,4 @@
-![](doc/pnl-bwh-hms.png)
+![](./pnl-bwh-hms.png)
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.2662497.svg)](https://doi.org/10.5281/zenodo.2662497) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
 
@@ -11,17 +11,18 @@ https://github.com/pnlbwh/tbss, 2019, DOI: https://doi.org/10.5281/zenodo.266249
 
 See installation instruction [here](./README.md)
 
-
 Table of Contents
 =================
-    
+
+   * [Usage](#usage)
    * [Useful commands](#useful-commands)
       * [1. Run ENIGMA TBSS](#1-run-enigma-tbss)
       * [2. Run user template based TBSS](#2-run-user-template-based-tbss)
-      * [3. Minimum TBSS](#3-minimum-tbss)
-      * [4. ROI analysis](#4-roi-analysis)
-      * [5. Check progress](#5-check-progress)
-      * [6. Create summary](#6-create-summary)
+      * [3. nonFA TBSS](#3-nonfa-tbss)
+      * [4. Minimum TBSS command](#4-minimum-tbss-command)
+      * [5. ROI analysis](#5-roi-analysis)
+      * [6. Check progress](#6-check-progress)
+      * [7. Create summary](#7-create-summary)
    * [Overview](#overview)
       * [Step-1: Preprocessing](#step-1-preprocessing)
       * [Step-2: Registration](#step-2-registration)
@@ -36,9 +37,9 @@ Table of Contents
       * [4. User template](#4-user-template)
    * [Caselist](#caselist)
    * [Input images](#input-images)
-      * [1. With dwi/mask image list](#1-with-dwimask-image-list)
-      * [2. With diffusivity image list](#2-with-diffusivity-image-list)
-      * [3. With diffusivity image directory](#3-with-diffusivity-image-directory)
+         * [1. With dwi/mask image list](#1-with-dwimask-image-list)
+         * [2. With diffusivity image list](#2-with-diffusivity-image-list)
+         * [3. With diffusivity image directory](#3-with-diffusivity-image-directory)
    * [Space](#space)
    * [List of outputs](#list-of-outputs)
       * [1. Folders](#1-folders)
@@ -66,8 +67,139 @@ Table of Contents
    * [NRRD support](#nrrd-support)
    * [Reference](#reference)
 
-
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
+
+# Usage
+
+    usage: tbss_all [-h] [--modality MODALITY] [-i INPUT] [--generate]
+                [-c CASELIST] [-o OUTDIR] [--studyTemplate] [--enigma]
+                [--fmrib] [--template TEMPLATE] [--templateMask TEMPLATEMASK]
+                [--skeleton SKELETON] [--skeletonMask SKELETONMASK]
+                [--skeletonMaskDst SKELETONMASKDST] [-s SPACE] [-l LABELMAP]
+                [--lut LUT] [--qc] [--avg] [--force] [--verbose] [-n NCPU]
+                [--SKEL_THRESH SKEL_THRESH]
+                [--SEARCH_RULE_MASK SEARCH_RULE_MASK] [--status]
+                [--xfrmDir XFRMDIR]
+    
+    TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.
+    
+    optional arguments:
+    -h, --help          show this help message and exit
+    
+    --modality MODALITY   
+                        Modality={FA,MD,AD,RD...} of images to run TBSS on 
+                        (i) single modality analysis: you must run --modality FA
+                        first, then you can run for other modalities such as
+                        --modality AD 
+                        
+                        (ii) multi modality analysis: first
+                        modality must be FA, and then the rest i.e --modality
+                        FA,MD,AD,RD,... files from FA TBSS analysis are used
+                        in rest of the modalities
+                        
+                        
+    -i INPUT, --input INPUT
+    
+                        (i) DWI images and masks: a txt/csv file with
+                        dwi1,mask1\ndwi2,mask2\n... ; TBSS will start by
+                        creating FA, MD, AD, and RD; additionally, use
+                        --generate flag 
+                        
+                        (ii) single modality analysis: a
+                        directory with one particular
+                        Modality={FA,MD,AD,RD,...} images, or a txt/csv file
+                        with ModImg1\nModImg2\n... TBSS will be done for
+                        specified Modality 
+                        
+                        (iii) multi modality analysis:
+                        comma-separated multiple input directories
+                        corresponding to the sequence of --modality, or a
+                        txt/csv file with
+                        Mod1_Img1,Mod2_Img1,...\nMod1_Img2,Mod2_Img2,...\n...
+                        ; TBSS will be done for FA first, and then for other
+                        modalities. 
+                        
+                        (iv) separate nonFA TBSS: if you wish to
+                        run TBSS for other modalities in future, files created
+                        during FA TBSS will be integrated into the nonFA TBSS.
+                        Provide --xfrmDir where transform files are located.
+                        All other directories will be realized relative to
+                        --xfrmDir. On the other hand, specification of --input
+                        and --modality are same as above.
+    
+    
+    --generate          generate diffusion measures for dwi1,mask1\n... list
+    
+    -c CASELIST, --caselist CASELIST
+                        caselist.txt where each line is a subject ID
+    
+    -o OUTDIR, --outDir OUTDIR
+                        where all outputs are saved in an organized manner
+    
+    --studyTemplate     create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst
+    
+    --enigma            use ENGIMA provided template, templateMask, skeleton,
+                        skeletonMask, and skeletonMaskDst, do JHU white matter
+                        atlas based ROI analysis using ENIGMA look up table
+    
+    --fmrib             use FSL provided template, and skeleton
+    
+    --template TEMPLATE   
+                        an FA image template (i.e ENIGMA, IIT), if not
+                        specified, ANTs template will be created from provided
+                        images, for ANTs template creation, you must provide
+                        FA images, once ANTs template is created, you can run
+                        TBSS on non FA images using that template
+    
+    --templateMask TEMPLATEMASK
+                        mask of the FA template, if not provided, one will becreated
+    
+    --skeleton SKELETON          
+                        skeleton of the FA template, if not provided, one will be created
+    
+    --skeletonMask SKELETONMASK  
+                        mask of the provided skeleton
+                        
+    --skeletonMaskDst SKELETONMASKDST 
+                        skeleton mask distance map
+                        
+    -s SPACE, --space SPACE
+                        you may register your template (including ANTs) to
+                        another standard space i.e MNI, not recommended for a
+                        template that is already in MNI space (i.e ENIGMA,
+                        IIT)
+    
+    -l LABELMAP, --labelMap LABELMAP
+                        labelMap (atlas) in standard space (i.e any
+                        WhiteMatter atlas from ~/fsl/data/atlases/
+    
+    --lut LUT           look up table for specified labelMap (atlas)
+    
+    --qc                halt TBSS pipeline to let the user observe quality of registration
+    
+    --avg               average Left/Right components of tracts in the atlas
+    
+    --force             overwrite existing directory/file
+    
+    --verbose           print everything to STDOUT
+    
+    -n NCPU, --ncpu NCPU  
+                        number of processes/threads to use (-1 for all
+                        available, may slow down your system, default 4)
+    
+    --SKEL_THRESH SKEL_THRESH
+                        threshold for masking skeleton and projecting FA image
+                        upon the skeleton, default 0.2
+    
+    --SEARCH_RULE_MASK SEARCH_RULE_MASK                        
+                        search rule mask for nonFA TBSS, see "tbss_skeleton
+                        --help", default /home/tb571/fsl/data/standard/LowerCingulum_1mm.nii.gz
+    
+    --status            prints progress of TBSS pipeline so far
+    
+    --xfrmDir XFRMDIR   provide previously created transform/template directory, used with separate/future nonFA TBSS 
+
 
 # Useful commands
 
@@ -82,13 +214,11 @@ See details on [ENIGMA](http://enigma.ini.usc.edu/wp-content/uploads/DTI_Protoco
     -o ~/enigmaTemplateOutput/
     
 `IMAGELIST.csv` is a list of FA,MD,AD,RD images in separate columns. A particular diffusivity images for all cases need 
-not to be in the same directory. Rather, they can be anywhere in your machine. Just make sure to specify absolute 
+**NOT** to be in the same directory. Rather, they can be anywhere in your machine. Just make sure to specify absolute 
 path to the diffusivity image in designated column of `IMAGELIST.csv`. See details in [ENIGMA branch](#1---enigma).
 
-**NOTE** For multi-modality like above, make sure to have FA as the first one.
+**NOTE** For multi-modality TBSS like above, make sure to have FA as the first modality.
 
-**NOTE** If you don't specify a `CASELIST.txt`, base names for image files are used as caseIDs. However, if you are doing multi-modality TBSS, 
-you wouldn't have the luxury of omitting the caselist.
 
     
 ## 2. Run user template based TBSS
@@ -100,7 +230,7 @@ you wouldn't have the luxury of omitting the caselist.
     --skeleton your_skeleton_FA.nii.gz \
     -o ~/userTemplateOutput/
 
-Alternative to the `IMAGELIST.csv`, you can specify a directory corresponding to each modality you want to analyze. 
+Alternative to the `IMAGELIST.csv` in the above, you can specify a directory corresponding to each modality you want to analyze. 
 However, you have to copy your diffusivity images in a directory. In the very least, the images across `FAimageDIR,MDimageDIR` 
 should have caseID from `CASELIST.txt` somewhere in their file names. But it doesn't need to have keyword "FA/MD" in their file names.
 
@@ -108,16 +238,40 @@ On the other hand, `your_FA.nii.gz` and `your_skeleton_FA.nii.gz` are the templa
 See details in [User template branch](#4-user-template).
 
 
-## 3. Minimum TBSS
+## 3. nonFA TBSS
+
+The best way to perform nonFA TBSS is running together with FA such as `--modality FA,MD,AD --input faDir,mdDir,adDir`.
+However, if you want to run nonFA TBSS at a future date based on FA template/registration, you can do as follows:
+
+**nonFA** `--engima` TBSS
+    
+    $libDir/tbss_all -i MD/origdata,RD/origdata \
+    --xfrmDir $testDir/enigmaTemplateOutput/transform \ # transform files are obtained from here
+    --modality MD,RD --enigma                           # --enigma tells to use enigma templates
+
+**nonFA** `--studyTemplate` TBSS
+
+    $libDir/tbss_all -i AD/origdata \
+    --xfrmDir $testDir/studyTemplateOutput/template \
+    --modality AD \
+    --study                                             # --study tells to use previous templates from studyTemplateOutput/stats/*
+
+
+A few other arguments are obtained by parsing previous command stored in `*TemplateOutput/log/commands.txt` file. In a nut-shell,
+nonFA TBSS would run under the same settings of FA TBSS.
+
+
+## 4. Minimum TBSS command
     
     lib/tbss_all -i FAimageDIR \
+    -c CASELIST.txt \
     -o ~/fmribuserTemplateOutput
     
 Voila! The pipeline will create a study specific template. Default `--modality` is assumed to be **FA**. See details in 
 [study template branch](#3---studytemplate).
 
 
-## 4. ROI analysis
+## 5. ROI analysis
 
 With all the above, you may provide an atlas and a [space](#-space) of the atlas defining image. Then, [ROI based statistics](#roi-analysis) 
 will be calculated.
@@ -129,7 +283,7 @@ will be calculated.
 Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
 
 
-## 5. Check progress
+## 6. Check progress
 
 If you have a good number of cases to process, and you would like to know how far the pipeline has progressed, 
 do the following:
@@ -154,7 +308,7 @@ The `--status` command uses information from `outDir/log/config.ini` to collect 
 Amazing, isn't it! 
 
  
-## 6. Create summary
+## 7. Create summary
 
 Finally, TBSS pipeline can generate an HTML file with skeleton overlaid upon the diffusivity measure for all cases.
 
@@ -173,7 +327,7 @@ In a nutshell, this pipeline should facilitate an user in running TBSS study by 
 Moreover, it harnesses multiprocessing capability from Python making the program significantly faster than any 
 job scheduling framework (i.e lsf).
 
-![](doc/tbss-flowchart.png)
+![](./tbss-flowchart.png)
 
 
 ## Step-1: Preprocessing
@@ -299,14 +453,19 @@ Finally, the user can specify any or all of the following:
 In other words, branch specific templates have precedence over user template. 
 For example, if `--enigma` is specified, it will override `--template`, `--skeleton` etc specified again.
 However, since `--fmrib` comes with only `--template` and `--skeleton`, 
-you may specify `--templateMask`, `--skeletonMask` etc. with it. 
+you should specify `--templateMask`, `--skeletonMask` etc. with it. 
 
 
 # Caselist
 
-Files in each subdirectory start with a caseid obtained from `--caselist`. If a caselist is not specified, then one 
-is created from the input images. Such caselist comprise the basenames of images without extension. For example, if 
-image path is: `/path/to/001/image001.nii.gz`, then created caseid would be `image001` only.
+File names in each subdirectory start with a caseid obtained from `--caselist`. 
+There must be one caseid in each line:
+    
+    case1
+    case2
+    case3
+    ...
+    
 
 # Input images
 
@@ -323,6 +482,14 @@ specify your input DWI/Mask in a text file as follows:
 
 In addition, provide the `--generate` flag.
 
+**NOTE** There must be one dwi,mask pair in each line, separated by comma:
+
+    dwi1,mask1
+    dwi2,mask2
+    dwi3,mask3
+    ...
+
+
 Then, FA, MD, AD, RD are created using either DIPY/FSL diffusion tensor models. Then, TBSS is done for 
 specified `--modality`.
 
@@ -335,6 +502,20 @@ Alternatively, you can specify a list of diffusivity images sitting in different
     -i INPUT.csv            ModImg1\nModImg2\n... ; TBSS will be done for specified Modalities
 
 The pipeline will organize them in proper [directory structure](#1-folders).
+
+
+**NOTE** Let's say you have two modalities FA and MD and one `INPUT.csv`. Then, you would use:
+
+    -i INPUT.csv --modality FA,MD
+    
+where `INPUT.csv` looks like following:
+
+    /path/to/FA/image1,/path/to/MD/image1
+    /path/to/FA/image2,/path/to/MD/image2
+    /path/to/FA/image3,/path/to/MD/image3
+    ...
+
+As you see, first column corresponds to FA images, while the comma separated second column corresponds to MD images.
 
 
 ### 3. With diffusivity image directory
@@ -412,7 +593,7 @@ Files in each subdirectory start with a caseid obtained from `--caselist`.
 
 #### a. preproc
 
-Contains all [`tbss_1_preproc`] processed data.
+Contains all [tbss_1_preproc](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide#tbss_1_preproc) processed data.
 
 #### b. origdata
 
@@ -469,9 +650,11 @@ csv file containing summary of region based statistics etc.
 
 # multi-modality TBSS
 
-Unlike requiring to save FA TBSS files with a particular name as directed by some protocol, this pipeline is capable of 
-running multi-modality TBSS. All you have to do is to make sure, first modality in the specified modalities is FA and 
-corresponding input images are FA.
+Unlike requiring to save nonFA TBSS files with a particular name as directed by some protocol, this pipeline is capable of 
+running multi-modality TBSS with any name for input images. All you have to do is, make sure first modality in 
+the specified modalities is FA and corresponding input images are FA. 
+Rest of the modalities should also correspond to rest of the images.
+
 
     --modality MODALITY         Modality={FA,MD,AD,RD ...} of images to run TBSS on
             
@@ -497,42 +680,42 @@ corresponding input images are FA.
                                 a txt/csv file with Mod1_Img1,Mod2_Img1,...\nMod1_Img2,Mod2_Img2,...\n... ;
                                 TBSS will be done for FA first, and then for other modalities.
     
-                                (iv) separate nonFA TBSS:
-                                if you wish to run TBSS for other modalities in future, files created during FA TBSS will be 
-                                integrated into the nonFA TBSS. Provide --xfrmDir, --output from previous FA TBSS. 
-                                In addition, provide any templates created during FA TBSS. On the other hand, specification of 
-                                --input and --modality are same as above.
+
+                                (iv) separate nonFA TBSS: if you wish to 
+                                run TBSS for other modalities in future, files created
+                                during FA TBSS will be integrated into the nonFA TBSS.
+                                Provide --xfrmDir where transform files are located.
+                                All other directories will be realized relative to
+                                --xfrmDir. On the other hand, specification of --input
+                                and --modality are same as above.
 
 
 However, if you wish to run FA first and then other modalities in future, use option (iv) from above. There, you should 
-provide the directory containing warp/affine obtained during registration of subject FA to the template/standard space. 
-This way, we bypass doing the same non-linear registration once again. In addition, provide any templates created 
-during FA TBSS.Here are a few sample commands for running separate nonFA TBSS:
+provide (by `--xfrmDir`) the directory containing warp/affine obtained during registration of subject FA to the template/standard space. 
+This way, we bypass doing the same non-linear registration once again. In addition, provide the type/branch name (one of 
+`enigma`, `fmrib`, `study`) of TBSS you want to run. Previous registration files and any templates created during 
+FA TBSS are realized with respect to `--xfrmDir` that you provide. In addition, `log/commands.txt` file from previous 
+output directory is exploited to figure out arguments provided to FA TBSS before. In a nutshell, nonFA TBSS will run 
+with the same settings of previous FA TBSS. 
+
+
+Here are a few sample commands for running separate nonFA TBSS:
 
     
-**partial** `--engima` TBSS
+**nonFA** `--engima` TBSS
     
     $libDir/tbss_all -i MD/origdata,RD/origdata \
-    -c $CASELIST \                                      # same caselist that was used for FA TBSS
     --xfrmDir $testDir/enigmaTemplateOutput/transform \ # transform files are obtained from here
     --modality MD,RD --enigma \                         # --enigma tells to use enigma templates
-    --avg                                               # -o is not required
 
 
 
-**partial** `--studyTemplate` TBSS
+**nonFA** `--studyTemplate` TBSS
 
     $libDir/tbss_all -i AD/origdata \
-    -c $CASELIST \
     --xfrmDir $testDir/studyTemplateOutput/template \
     --modality AD \
-    --template $testDir/studyTemplateOutput/template/template0.nii.gz \     # provide created templates 
-    --templateMask $testDir/studyTemplateOutput/stats/mean_FA_mask.nii.gz \
-    --skeleton $testDir/studyTemplateOutput/stats/mean_FA_skeleton.nii.gz \
-    --skeletonMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
-    --skeletonMaskDst $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask_dst.nii.gz \
-    -s $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz \                        # provide space defining image if wanted
-    -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \                # provide atlas if wanted
+    --study                                             # --study tells to use previously created templates from studyTemplateOutput/stats/*
 
 
 # List creation
@@ -660,6 +843,7 @@ conversion on the fly.
 
 See Billah, Tashrif; Bouix, Sylvain, Rathi, Yogesh; Various MRI Conversion Tools, 
 https://github.com/pnlbwh/conversion, 2019, DOI: 10.5281/zenodo.2584003 for more details on the conversion method.
+
 
 # Reference
 

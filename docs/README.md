@@ -1,4 +1,4 @@
-![](doc/pnl-bwh-hms.png)
+![](./pnl-bwh-hms.png)
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.2662497.svg)](https://doi.org/10.5281/zenodo.2662497) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
 
@@ -146,7 +146,7 @@ Running the tests should take less than an hour.
 
 You may run smaller and faster unit tests as follows.
     
-    python -m unittest -v lib/tests/test_*.py
+    pytest -v lib/tests/test_*.py
     
 **NOTE** In the current release, unit tests are dependant upon the outputs of whole pipeline test. 
 This is likely to change in future. 
