@@ -12,6 +12,7 @@
 # ===============================================================================
 
 from tbssUtil import *
+from subprocess import Popen
 
 def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
 
@@ -52,12 +53,18 @@ def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
     # use of -e (--random-seed) requires
     # $ antsRegistration --version
     # 2.2.0
-    check_call((' ').join(['antsRegistrationSyNQuick.sh',
+    cmd=(' ').join(['antsRegistrationSyNQuick.sh',
                            '-d', '3',
                            '-f', fixedImg,
                            '-m', movingImg,
                            '-o', outPrefix,
-                           '-e', '123456']), shell=True, stdout= f, stderr= sys.stdout)
+                           '-e', '123456'])
+   
+    # check_call(cmd, shell= True, stdout= f, stderr= sys.stdout)
+    
+    # use Popen() so we can wait()   
+    p = Popen(cmd, shell=True, stdout= f, stderr= sys.stdout)
+    p.wait()
 
 
     if f.name!='<sys.stdout>':
