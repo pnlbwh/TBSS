@@ -150,7 +150,8 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 --ncpu -1 --force && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
 
-read
+
+# read
 # pushd .
 # cd $SCRIPTDIR
 # pytest -v $testDir/"test_enigma.py"
