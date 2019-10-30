@@ -15,7 +15,7 @@
 
 import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
-    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir
+    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir, listdir
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
@@ -43,8 +43,7 @@ def main():
 # __version__ {__version__}\n\n''')
 
     parser = argparse.ArgumentParser(
-        description='TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.',
-        formatter_class= argparse.RawTextHelpFormatter)
+        description='TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.')
 
     parser.add_argument('--modality', type= str, default= 'FA', help= """Modality={FA,MD,AD,RD...} of images to run TBSS on
 
@@ -72,8 +71,8 @@ TBSS will be done for FA first, and then for other modalities.
 
 (iv) separate nonFA TBSS:
 if you wish to run TBSS for other modalities in future, files created during FA TBSS will be 
-integrated into the nonFA TBSS. Provide --xfrmDir, --output from previous FA TBSS. 
-In addition, provide any templates created during FA TBSS. On the other hand, specification of 
+integrated into the nonFA TBSS. Provide --xfrmDir where transform files are located. All other directories will be 
+realized relative to --xfrmDir. On the other hand, specification of 
 --input and --modality are same as above.""")
 
     parser.add_argument('--generate', action='store_true',
@@ -121,7 +120,7 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
                         help='labelMap (atlas) in standard space (i.e any WhiteMatter atlas from ~/fsl/data/atlases/')
 
     parser.add_argument('--lut', type= str,
-                         help='look up table for specified labelMap (atlas), default: FreeSurferColorLUT.txt')
+                         help='look up table for specified labelMap (atlas)')
 
     parser.add_argument('--qc', action='store_true', help='halt TBSS pipeline to let the user observe quality of registration')
     parser.add_argument('--avg', action='store_true', help='average Left/Right components of tracts in the atlas')
@@ -130,21 +129,20 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     parser.add_argument('--verbose', action='store_true', help='print everything to STDOUT')
 
 
-    parser.add_argument('-n','--ncpu', type= int,
-                        help= 'number of processes/threads to use (-1 for all available, may slow down your system)', default= 4)
+    parser.add_argument('-n','--ncpu', type= int, default= 4,
+                        help='number of processes/threads to use (-1 for all available, may slow down your system, default %(default)s)')
 
-    parser.add_argument('--SKEL_THRESH', type=str,
-                        help='threshold for masking skeleton and projecting FA image upon the skeleton', default='0.2')
+    parser.add_argument('--SKEL_THRESH', type=str, default='0.2',
+                        help=f'threshold for masking skeleton and projecting FA image upon the skeleton, default %(default)s')
 
-    parser.add_argument('--SEARCH_RULE_MASK', type=str,
-                        help='search rule mask for nonFA TBSS, see "tbss_skeleton --help"',
-                        default=pjoin(fslDataDir, 'standard', 'LowerCingulum_1mm.nii.gz'))
+    parser.add_argument('--SEARCH_RULE_MASK', type=str, default=pjoin(fslDataDir, 'standard', 'LowerCingulum_1mm.nii.gz'),
+                        help=f'search rule mask for nonFA TBSS, see "tbss_skeleton --help", default %(default)s')
 
     parser.add_argument('--status', action='store_true',
                         help='prints progress of TBSS pipeline so far')
 
     parser.add_argument('--xfrmDir', type=str,
-                        help='used with separate/future nonFA TBSS, provide previously created transform/template directory')
+                        help='provide previously created transform/template directory, used with separate/future nonFA TBSS')
 
 
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
@@ -153,6 +151,12 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
 
     if args.outDir:
         args.outDir = abspath(args.outDir)
+        # we cannot overwrite outDir, because previous output can be there
+        makeDirectory(args.outDir)
+
+        args.logDir = pjoin(args.outDir, 'log')
+        # we cannot overwrite logDir, because previous commands can be there
+        makeDirectory(args.logDir)
 
     if args.status:
         if not args.outDir:
@@ -162,20 +166,55 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         show_progress(args.outDir, args.verbose)
         exit()
 
+
     # if modality is not FA, check if 'transform' directory exists
     # warp and affine will be used from this directory to study non FA images
     if not args.xfrmDir:
         args.xfrmDir = pjoin(args.outDir, 'transform')
+
     else:
         args.xfrmDir = abspath(args.xfrmDir)
+        warn(f'Running separate nonFA TBSS, with same settings of previous FA TBSS')
         args.outDir = dirname(args.xfrmDir)
-        warn(f'Running separate nonFA TBSS, --outDir is assigned to previous FA TBSS: {args.outDir}')
+        args.logDir = pjoin(args.outDir, 'log')
 
-    modalities = args.modality.split(',')
+        # using previous files, --force is invalid
+        args.force = False
 
-    # write config file ====================================================================================
+        # templates are obtained/specified in the branch block
+        args.template = None
+        args.templateMask = None
+        args.skeleton = None
+        args.skeletonMask = None
+        args.skeletonMaskDst = None
+
+        # obtain --caselist, --space, --labelMap, --lut, --avg, --SEARCH_RULE_MASK, --SKEL_THRESH from log
+        # read the latest log
+        # parse the above keys
+        with open(pjoin(args.outDir, 'log', 'commands.txt')) as f:
+            lastCommand= f.read().strip().split('\n')[-1]
+
+        lastArgs= lastCommand.split()
+        for i, entity in enumerate(lastArgs):
+            if entity=='--caselist':
+                args.caselist= lastArgs[i+1]
+            elif entity=='--space':
+                args.space= lastArgs[i+1]
+            elif entity=='--labelMap':
+                args.labelMap= lastArgs[i+1]
+            elif entity=='--lut':
+                args.lut= lastArgs[i+1]
+            elif entity=='--SKEL_THRESH':
+                args.SKEL_THRESH= lastArgs[i+1]
+            elif entity=='--SEARCH_RULE_MASK':
+                args.SEARCH_RULE_MASK= lastArgs[i+1]
+            elif entity=='--avg':
+                args.avg= True
+
     if args.ncpu==-1:
         args.ncpu= cpu_count()
+
+    modalities = args.modality.split(',')
 
 
     # check executables ====================================================================================
@@ -203,6 +242,13 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     if not args.skeleton and (args.skeletonMask or args.skeletonMaskDst):
         raise AttributeError('--skeletonMask and/or --skeletonMaskDst is invalid w/o --skeleton')
 
+    if args.labelMap and not args.lut:
+        raise AttributeError('--labelmap is invalid w/o --lut')
+
+    if not args.caselist and not modalities[0]!='FA':
+        raise AttributeError('--caselist is mandatory, see "List creation" section in TUTORIAL.md about how to create one')
+
+
 
     # take absolute path for everything
     if args.caselist:
@@ -226,14 +272,27 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     if args.SEARCH_RULE_MASK:
         args.SEARCH_RULE_MASK = abspath(args.SEARCH_RULE_MASK)
 
+    statsDir = pjoin(args.outDir, 'stats')
+    makeDirectory(statsDir, args.force)
+
+
     if args.studyTemplate:
-        # clear all template arguments
-        print('--study template specified, overriding any provided templates')
-        args.template = None
-        args.templateMask = None
-        args.skeleton = None
-        args.skeletonMask = None
-        args.skeletonMaskDst = None
+
+        if modalities[0] == 'FA':
+            # clear all template arguments
+            print('--study template specified, overriding any provided templates')
+            args.template = None
+            args.templateMask = None
+            args.skeleton = None
+            args.skeletonMask = None
+            args.skeletonMaskDst = None
+        else:
+            args.template = pjoin(statsDir, 'template0.nii.gz')
+            args.templateMask = pjoin(statsDir, 'mean_FA_mask.nii.gz')
+            args.skeleton = pjoin(statsDir, 'mean_FA_skeleton.nii.gz')
+            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+
 
     elif args.enigma:
         # use enigma http://enigma.ini.usc.edu/wp-content/uploads/2013/02/enigmaDTI.zip provided templates
@@ -257,37 +316,45 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         args.template= pjoin(fslDataDir, 'standard', 'FMRIB58_FA_1mm.nii.gz')
         args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
 
-
-    makeDirectory(args.outDir)
-
-    statsDir = pjoin(args.outDir, 'stats')
-    makeDirectory(statsDir, args.force)
+        if modalities[0] != 'FA':
+            # obtain templateMask, skeletonMask, skeletonMaskDst from stats/
+            args.templateMask = pjoin(statsDir, 'mean_FA_mask.nii.gz')
+            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
 
     # copy templates to stat directory with a softlink of proper name
     CWD= getcwd()
     chdir(statsDir)
+    files= listdir(statsDir)
 
-    # just copy template
-    if args.template and not isfile(args.template):
-        check_call(f'cp {args.template} .', shell=True)
 
-    # softlink the rest
-    if args.templateMask and not isfile(args.templateMask):
-        check_call(f'cp {args.templateMask} .', shell= True)
-        check_call(f'ln -s {basename(args.templateMask)} mean_FA_mask.nii.gz', shell= True)
+    # soft link all the provided templates
+    if args.template:
+        fileBaseName= basename(args.template)
+        if fileBaseName not in files:
+            check_call(f'ln -s {args.template}', shell= True)
 
-    if args.skeleton and not isfile(args.skeleton):
-        check_call(f'cp {args.skeleton} .', shell= True)
-        check_call(f'ln -s {basename(args.skeleton)} mean_FA_skeleton.nii.gz', shell= True)
+    if args.templateMask:
+        fileBaseName= basename(args.templateMask)
+        if fileBaseName not in files:
+            check_call(f'ln -s {args.templateMask}', shell=True)
 
-    if args.skeletonMask and not isfile(args.skeletonMask):
-        check_call(f'cp {args.skeletonMask} .', shell= True)
-        check_call(f'ln -s {basename(args.skeletonMask)} mean_FA_skeleton_mask.nii.gz', shell= True)
+    if args.skeleton:
+        fileBaseName= basename(args.skeleton)
+        if fileBaseName not in files:
+            check_call(f'ln -s {args.skeleton}', shell= True)
 
-    if args.skeletonMaskDst and not isfile(args.skeletonMaskDst):
-        check_call(f'cp {args.skeletonMaskDst} .', shell= True)
-        check_call(f'ln -s {basename(args.skeletonMaskDst)} mean_FA_skeleton_mask_dst.nii.gz', shell= True)
+    if args.skeletonMask:
+        fileBaseName= basename(args.skeletonMask)
+        if fileBaseName not in files:
+            check_call(f'ln -s {args.skeletonMask}', shell= True)
+
+    if args.skeletonMaskDst:
+        fileBaseName= basename(args.skeletonMaskDst)
+        if fileBaseName not in files:
+            check_call(f'ln -s {args.skeletonMaskDst}', shell= True)
+
 
 
     chdir(CWD)
@@ -315,11 +382,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     # save all ROI statistics, mean, and combined images
 
 
-
-    args.logDir = pjoin(args.outDir, 'log')
-    # we cannot overwrite logDir, because previous FA modality log can be there, so give control to the user
-    makeDirectory(args.logDir, args.force)
-
     # config file for logging purpose only
     with open(pjoin(args.logDir, 'config.ini'), 'w') as f:
         f.write('[DEFAULT]\n')
@@ -345,18 +407,20 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
             else:
                 args_string.append(f'--{key} {args.__dict__[key]}')
 
-    with open(pjoin(args.logDir, 'command.txt'), 'w') as f:
-        f.write((' ').join(args_string))
+    # append the commands to serve as history
+    with open(pjoin(args.logDir, 'commands.txt'), 'a') as f:
+        f.write((' ').join(args_string)+'\n')
 
 
     for modality in modalities:
         modDir = pjoin(args.outDir, f'{modality}')
         makeDirectory(modDir, args.force)
 
-    if args.caselist:
-        cases= read_cases(args.caselist)
-        # copy caselist into logDir
-        copyfile(args.caselist, pjoin(args.logDir, 'caselist.txt'))
+
+    cases= read_cases(args.caselist)
+    # copy caselist into logDir
+    copyfile(args.caselist, pjoin(args.logDir, 'caselist.txt'))
+
 
     # write start time
     write_time(pjoin(args.logDir, 'start_time.txt'), datetime.now())
@@ -372,9 +436,6 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
             makeDirectory(measureDir, args.force)
 
         dwImgs, masks= read_imgs_masks(abspath(args.input))
-        if not args.caselist:
-            # generate caselist
-            args.caselist, cases= write_caselist(args.logDir, List=dwImgs)
 
         dwImgs, masks= orderCases(dwImgs, cases, masks)
 
@@ -392,24 +453,19 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
     # when input is a modality image list
     elif isfile(args.input):
         allModImgs = read_imgs(abspath(args.input), num_modalities)
-        if not args.caselist:
-            # generate caselist
-            args.caselist, cases= write_caselist(args.logDir, List=allModImgs)
 
         for i, modality in enumerate(modalities):
             modDir = pjoin(args.outDir, f'{modality}')
             # check if input directory is modDir, if not copy
-            for imgPath in allModImgs[:,i]:
+            warn('Assuming cases in --caselist correspond to images in --input, make sure they are correctly ordered')
+            for c, imgPath in zip(cases,allModImgs[:,i]):
                 if dirname(imgPath) is not modDir:
-                    check_call(f'cp {imgPath} {modDir}/', shell= True)
+                    check_call(f'cp {imgPath} {modDir}/{c}.nii.gz', shell= True)
 
 
     # when input are directories
     else:
         dirs= [abspath(p) for p in args.input.split(',')]
-        if not args.caselist:
-            # generate caselist
-            args.caselist, cases= write_caselist(args.logDir, Dir=dirs[0])
 
         if len(dirs)!=num_modalities:
             raise AttributeError('--modality and --input don\'t match')
