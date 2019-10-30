@@ -15,7 +15,7 @@
 
 import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
-    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir
+    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir, RAISE
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
