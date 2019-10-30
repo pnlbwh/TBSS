@@ -382,7 +382,7 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         # need to generate diffusion measures first
         for dwImgPath, maskPath, caseId in zip(dwImgs, masks, cases):
             pool.apply_async(func= generate_diffusion_measures,
-                             args= (dwImgPath, maskPath, caseId, args.outDir))
+                             args= (dwImgPath, maskPath, caseId, args.outDir), error_callback= RAISE)
 
 
         pool.close()
@@ -399,9 +399,9 @@ In addition, provide any templates created during FA TBSS. On the other hand, sp
         for i, modality in enumerate(modalities):
             modDir = pjoin(args.outDir, f'{modality}')
             # check if input directory is modDir, if not copy
-            for imgPath in allModImgs[:,i]:
+            for c,imgPath in zip(cases,allModImgs[:,i]):
                 if dirname(imgPath) is not modDir:
-                    check_call(f'cp {imgPath} {modDir}/', shell= True)
+                    check_call(f'cp {imgPath} {modDir}/{c}.nii.gz', shell= True)
 
 
     # when input are directories
