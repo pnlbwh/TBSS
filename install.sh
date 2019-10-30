@@ -150,11 +150,10 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 --ncpu -1 --force && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
 
-
-# read
+read
 # pushd .
 # cd $SCRIPTDIR
-# python -m unittest -v $testDir/"test_enigma.py"
+# pytest -v $testDir/"test_enigma.py"
 # popd
 
 
@@ -163,8 +162,10 @@ echo Testing --fmrib branch ...
 pushd .
 cd $testDir/enigmaTemplateOutput/
 $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
+-c $CASELIST \
 --modality FA,MD,AD,RD --fmrib \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
+--lut $testDir/data/FreeSurferColorLUT.txt \
 --avg -o $testDir/fmribTemplateOutput/ \
 --ncpu -1 --force && echo --fmrib branch execution successful \
 || echo --fmrib branch execution FAILED
@@ -174,7 +175,7 @@ popd
 # read
 # pushd .
 # cd $SCRIPTDIR
-# python -m unittest -v $testDir/"test_fmrib.py"
+# pytest -v $testDir/"test_fmrib.py"
 # popd
 
 
@@ -192,16 +193,16 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 --modality FA,MD,AD,RD --studyTemplate \
 -s $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
+--lut $testDir/data/FreeSurferColorLUT.txt \
 --avg -o $testDir/studyTemplateOutput/ \
 --ncpu -1 --force && echo --studyTemplate branch execution successful \
 || echo --studyTemplate branch execution FAILED
 popd
 
-
 # read
 # pushd .
 # cd $SCRIPTDIR
-# python -m unittest -v $testDir/"test_study.py"
+# pytest -v $testDir/"test_study.py"
 # popd
 
 
@@ -212,11 +213,9 @@ echo Testing partial --enigma branch ...
 pushd .
 cd $testDir/enigmaTemplateOutput
 $libDir/tbss_all -i MD/origdata,RD/origdata \
--c $CASELIST \
 --xfrmDir $testDir/enigmaTemplateOutput/transform \
---modality MD,RD --enigma \
---avg -o $testDir/enigmaTemplateOutput/ \
---ncpu -1 && echo Partial --enigma branch execution successful \
+--modality MD,RD \
+--enigma && echo Partial --enigma branch execution successful \
 || echo Partial --enigma branch execution FAILED
 popd
 
@@ -227,18 +226,9 @@ echo Testing partial --studyTemplate branch ...
 pushd .
 cd $testDir/enigmaTemplateOutput/
 $libDir/tbss_all -i AD/origdata,RD/origdata \
--c $CASELIST \
 --xfrmDir $testDir/studyTemplateOutput/template \
 --modality AD,RD \
---template $testDir/studyTemplateOutput/template/template0.nii.gz \
---templateMask $testDir/studyTemplateOutput/stats/mean_FA_mask.nii.gz \
---skeleton $testDir/studyTemplateOutput/stats/mean_FA_skeleton.nii.gz \
---skeletonMask $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask.nii.gz \
---skeletonMaskDst $testDir/studyTemplateOutput/stats/mean_FA_skeleton_mask_dst.nii.gz \
--s $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz \
--l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
---avg -o $testDir/studyTemplateOutput2/ \
---ncpu -1 && echo Partial --studyTemplate branch execution successful \
+--study && echo Partial --studyTemplate branch execution successful \
 || echo Partial --studyTemplate branch execution FAILED
 popd
 
