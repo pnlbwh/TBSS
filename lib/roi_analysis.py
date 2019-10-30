@@ -120,8 +120,8 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir, N_CPU):
     for c, imgPath in zip(cases, imgs):
 
         # subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
-        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
-                                                    roiDir, args.avg), error_callback=RAISE)
+        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, 
+                                                    intLabels, roiDir, args.avg), error_callback= RAISE)
 
     pool.close()
     pool.join()
@@ -160,3 +160,4 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir, N_CPU):
 
 if __name__=='__main__':
     pass
+

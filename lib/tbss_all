@@ -15,7 +15,7 @@
 
 import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
-    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir, listdir
+    dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir, listdir, RAISE
 from conversion import loadExecutable, read_imgs_masks, read_cases
 from loadFiles import read_imgs, write_caselist, write_time
 from orderCases import orderCases
@@ -443,7 +443,7 @@ realized relative to --xfrmDir. On the other hand, specification of
         # need to generate diffusion measures first
         for dwImgPath, maskPath, caseId in zip(dwImgs, masks, cases):
             pool.apply_async(func= generate_diffusion_measures,
-                             args= (dwImgPath, maskPath, caseId, args.outDir))
+                             args= (dwImgPath, maskPath, caseId, args.outDir), error_callback= RAISE)
 
 
         pool.close()

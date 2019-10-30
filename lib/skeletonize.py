@@ -11,7 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit
+from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit, RAISE
 import numpy as np
 from project_skeleton import project_skeleton
 
@@ -212,15 +212,14 @@ Note: Replace all the above directories with absolute paths.\n\n''')
     allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, imgs):
-            res.append(pool.apply_async(project_skeleton, (c, imgPath, args, skelDir)))
-
-
-    for i,r in enumerate(res):
-        # res contains data in the same order imgs was passed
-        allFAskeletonizedData[i,: ]= r.get()
-
+            res.append(pool.apply_async(project_skeleton, (c, imgPath, args, skelDir), error_callback= RAISE))
+            
     pool.close()
     pool.join()
+    
+    # this loop has been moved out of multiprocessing block to prevent memroy error
+    for i,r in enumerate(res):
+        allFAskeletonizedData[i,: ]= r._value   
 
     allFAskeletonized= pjoin(statsDir, f'all_{args.modality}_skeletonized.nii.gz')
     print('Creating ', allFAskeletonized)
@@ -228,3 +227,4 @@ Note: Replace all the above directories with absolute paths.\n\n''')
     print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
 
     return args
+
