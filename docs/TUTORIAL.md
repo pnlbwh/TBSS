@@ -1,4 +1,4 @@
-![](doc/pnl-bwh-hms.png)
+![](./pnl-bwh-hms.png)
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.2662497.svg)](https://doi.org/10.5281/zenodo.2662497) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
 
@@ -327,7 +327,7 @@ In a nutshell, this pipeline should facilitate an user in running TBSS study by 
 Moreover, it harnesses multiprocessing capability from Python making the program significantly faster than any 
 job scheduling framework (i.e lsf).
 
-![](doc/tbss-flowchart.png)
+![](./tbss-flowchart.png)
 
 
 ## Step-1: Preprocessing
