@@ -110,7 +110,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         print('Made ', avg_stat_file)
 
 
-def roi_analysis(imgs, cases, args, statsDir, roiDir, N_CPU):
+def roi_analysis(imgs, cases, args, roiDir, N_CPU):
 
     intLabels = load(args.labelMap).get_data()
     label2name = parse_labels(np.unique(intLabels)[1:], args.lut)
@@ -139,7 +139,7 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir, N_CPU):
         # num2str() text formatting is for precision control
         df_comb.loc[i]= np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
-    combined_stat= pjoin(statsDir, f'{args.modality}_combined_roi.csv')
+    combined_stat= pjoin(args.statsDir, f'{args.modality}_combined_roi.csv')
     df_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_stat)
     print('Made ', combined_stat)
 
@@ -153,7 +153,7 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir, N_CPU):
             # num2str() text formatting is for precision control
             df_avg_comb.loc[i] = np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
-        combined_avg_stat= pjoin(statsDir, f'{args.modality}_combined_roi_avg.csv')
+        combined_avg_stat= pjoin(args.statsDir, f'{args.modality}_combined_roi_avg.csv')
         df_avg_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_avg_stat)
         print('Made ', combined_avg_stat)
 

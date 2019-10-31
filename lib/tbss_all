@@ -272,8 +272,8 @@ realized relative to --xfrmDir. On the other hand, specification of
     if args.SEARCH_RULE_MASK:
         args.SEARCH_RULE_MASK = abspath(args.SEARCH_RULE_MASK)
 
-    statsDir = pjoin(args.outDir, 'stats')
-    makeDirectory(statsDir, args.force)
+    args.statsDir = pjoin(args.outDir, 'stats')
+    makeDirectory(args.statsDir, args.force)
 
 
     if args.studyTemplate:
@@ -287,16 +287,16 @@ realized relative to --xfrmDir. On the other hand, specification of
             args.skeletonMask = None
             args.skeletonMaskDst = None
         else:
-            args.template = pjoin(statsDir, 'template0.nii.gz')
-            args.templateMask = pjoin(statsDir, 'mean_FA_mask.nii.gz')
-            args.skeleton = pjoin(statsDir, 'mean_FA_skeleton.nii.gz')
-            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
-            args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            args.template = pjoin(args.statsDir, 'template0.nii.gz')
+            args.templateMask = pjoin(args.statsDir, 'mean_FA_mask.nii.gz')
+            args.skeleton = pjoin(args.statsDir, 'mean_FA_skeleton.nii.gz')
+            args.skeletonMask = pjoin(args.statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMaskDst = pjoin(args.statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
 
     elif args.enigma:
         # use enigma http://enigma.ini.usc.edu/wp-content/uploads/2013/02/enigmaDTI.zip provided templates
-        print('--enigma tempalate specified, '
+        print('--enigma template specified, '
               'using http://enigma.ini.usc.edu/wp-content/uploads/2013/02/enigmaDTI.zip provided templates')
         enigmaDir= pjoin(LIBDIR, 'data', 'enigmaDTI')
         args.template = pjoin(enigmaDir, 'ENIGMA_DTI_FA.nii.gz')
@@ -312,21 +312,21 @@ realized relative to --xfrmDir. On the other hand, specification of
 
     elif args.fmrib:
         # use FSL provided templates
-        print('--fmrib specified, using $FSLDIR/standard/FMRIB58_FA*.nii.gz templates')
+        print('--fmrib template specified, using $FSLDIR/standard/FMRIB58_FA*.nii.gz templates')
         args.template= pjoin(fslDataDir, 'standard', 'FMRIB58_FA_1mm.nii.gz')
         args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
 
         if modalities[0] != 'FA':
             # obtain templateMask, skeletonMask, skeletonMaskDst from stats/
-            args.templateMask = pjoin(statsDir, 'mean_FA_mask.nii.gz')
-            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
-            args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            args.templateMask = pjoin(args.statsDir, 'mean_FA_mask.nii.gz')
+            args.skeletonMask = pjoin(args.statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMaskDst = pjoin(args.statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
 
     # copy templates to stat directory with a softlink of proper name
     CWD= getcwd()
-    chdir(statsDir)
-    files= listdir(statsDir)
+    chdir(args.statsDir)
+    files= listdir(args.statsDir)
 
 
     # soft link all the provided templates
