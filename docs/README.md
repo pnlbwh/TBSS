@@ -1,4 +1,4 @@
-![](doc/pnl-bwh-hms.png)
+![](./pnl-bwh-hms.png)
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.2662497.svg)](https://doi.org/10.5281/zenodo.2662497) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
 
@@ -10,6 +10,8 @@ Billah, Tashrif; Bouix, Sylvain; Pasternak, Ofer; Generalized Tract Based Spatia
 https://github.com/pnlbwh/tbss, 2019, DOI: https://doi.org/10.5281/zenodo.2662497
 
 See [documentation](./TUTORIAL.md) for details.
+
+This software is also available as *Docker* and *Singularity* containers. See [tbss_containers](https://github.com/pnlbwh/tbss_containers) for details.
 
 Table of Contents
 =================
@@ -27,6 +29,7 @@ Table of Contents
    * [Tests](#tests)
       * [1. pipeline](#1-pipeline)
       * [2. unittest](#2-unittest)
+   * [Issues](#issues)      
     
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -151,3 +154,8 @@ You may run smaller and faster unit tests as follows.
 **NOTE** In the current release, unit tests are dependant upon the outputs of whole pipeline test. 
 This is likely to change in future. 
 
+
+
+# Issues
+
+See [Troubleshooting](./TUTORIAL.md#troubleshooting) and open an issue [here](https://github.com/pnlbwh/TBSS/issues).

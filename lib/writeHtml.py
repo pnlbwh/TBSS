@@ -15,7 +15,7 @@
 
 import sys, argparse
 from nilearn import image, plotting
-from tbssUtil import abspath, dirname, pjoin, makeDirectory
+from tbssUtil import abspath, dirname, pjoin, makeDirectory, RAISE
 from glob import glob
 from orderCases import orderCases
 from conversion import read_cases
@@ -90,7 +90,7 @@ def generate_ss(modDir, ssDir, cases, ncpu):
         print('Taking screen shot of ', c)
         output_file = pjoin(ssDir, f'{c}.png')
         pool.apply_async(func= plotting.plot_stat_map, args= (fg, ),
-                         kwds= {'bg_img':bg, 'dim':False, 'annotate':False, 'draw_cross':False, 'output_file':output_file, })
+            kwds= {'bg_img':bg, 'dim':False, 'annotate':False, 'draw_cross':False, 'output_file':output_file, }, error_callback= RAISE)
 
     pool.close()
     pool.join()

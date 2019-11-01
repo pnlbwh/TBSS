@@ -12,17 +12,17 @@
 # ===============================================================================
 
 
-from tbssUtil import FILEDIR, pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, ConfigParser, Pool
+from tbssUtil import pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, Pool, RAISE, basename, listdir
 from conversion import read_cases
 from antsTemplate import antsReg
 from orderCases import orderCases
 from glob import glob
-from plumbum.cmd import antsApplyTransforms, fslmaths
 from measureSimilarity import measureSimilarity
 from skeletonize import skeletonize
 from roi_analysis import roi_analysis
 from antsTemplate import antsMult
-
+from shellCmds import _fslmask, _antsApplyTransforms
+from fillHoles import fillHoles
 
 def process(args):
 
@@ -54,8 +54,8 @@ def process(args):
     # define directories
     modDir = pjoin(args.outDir, f'{args.modality}')
     # args.xfrmDir = pjoin(args.outDir, 'transform')
-    statsDir = pjoin(args.outDir, 'stats')
-    templateDir = pjoin(args.outDir, 'template/')
+    # args.statsDir = pjoin(args.outDir, 'stats')
+    templateDir = pjoin(args.outDir, 'template/')  # trailing slash is important for antsMultivariate*.sh
     preprocDir= pjoin(modDir, 'preproc')
     warpDir= pjoin(modDir, 'warped')
     skelDir= pjoin(modDir, 'skeleton')
@@ -81,6 +81,15 @@ def process(args):
     modImgs = orderCases(modImgs, cases)
 
 
+    if args.fillHoles:
+        # fill holes in all modality images
+        # caveat: origdata no longer remain origdata, become hole filled origdata
+        pool= Pool(args.ncpu)
+        pool.map_async(fillHoles, modImgs, error_callback= RAISE)
+        pool.close()
+        pool.join()
+
+
     # preprocessing ========================================================================================
     if args.modality=='FA':
         print('Preprocessing FA images: eroding them and zeroing the end slices ...')
@@ -101,14 +110,12 @@ def process(args):
         makeDirectory(pjoin(modDir, 'origdata'), True)
         makeDirectory(pjoin(modDir, 'preproc'), True)
 
-
         pool= Pool(args.ncpu)
         for c, imgPath in zip(cases, modImgs):
-            print('Processing ', c)
             FAmask= pjoin(args.outDir, 'FA', 'preproc', f'{c}_FA_mask.nii.gz')
             preprocMod= pjoin(preprocDir, f'{c}_{args.modality}.nii.gz')
 
-            pool.apply_async(fslmaths, (imgPath, '-mas', FAmask, preprocMod))
+            pool.apply_async(_fslmask, (imgPath, FAmask, preprocMod), error_callback= RAISE)
 
 
         pool.close()
@@ -136,6 +143,7 @@ def process(args):
         antsMult(antsMultCaselist, templateDir, args.logDir, args.ncpu, args.verbose)
         # TODO: rename the template
         args.template= pjoin(templateDir, 'template0.nii.gz')
+        check_call(f'ln -s {args.template} {args.statsDir}', shell= True)
 
         # warp and affine to template0.nii.gz have been created for each case during template construction
         # so template directory should be the transform directory
@@ -149,7 +157,8 @@ def process(args):
             makeDirectory(args.xfrmDir, True)
             pool= Pool(args.ncpu)
             for c, imgPath in zip(cases, modImgs):
-                pool.apply_async(antsReg, (args.template, imgPath, pjoin(args.xfrmDir, f'{c}_FA'), args.logDir, args.verbose))
+                pool.apply_async(antsReg, (args.template, imgPath, pjoin(args.xfrmDir, f'{c}_FA'), args.logDir, args.verbose),
+                                error_callback= RAISE)
 
             pool.close()
             pool.join()
@@ -168,8 +177,9 @@ def process(args):
 
         # TODO: rename the template
         args.template = outPrefix + 'Warped.nii.gz'
-
-
+        if basename(args.template) not in listdir(args.statsDir):
+            check_call(f'ln -s {args.template} {args.statsDir}', shell= True)
+        
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, modImgs):
         # generalize warp and affine
@@ -178,25 +188,20 @@ def process(args):
         output= pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')
 
         if not args.space:
-            print(f'Warping {imgPath} to template space ...')
-            pool.apply_async(antsApplyTransforms, ('-d', '3',
-                                                   '-i', imgPath,
-                                                   '-o', output,
-                                                   '-r', args.template,
-                                                   '-t', warp2tmp, trans2tmp))
+            # print(f'Warping {imgPath} to template space ...')
+            pool.apply_async(_antsApplyTransforms, (imgPath, output, args.template, warp2tmp, trans2tmp),
+                            error_callback= RAISE)
+
 
         else:
-            print(f'Warping {imgPath} to template-->standard space ...')
-            pool.apply_async(antsApplyTransforms, ('-d', '3',
-                                                   '-i', imgPath,
-                                                   '-o', output,
-                                                   '-r', args.template,
-                                                   '-t', warp2space, trans2space, warp2tmp, trans2tmp))
+            # print(f'Warping {imgPath} to template-->standard space ...')
+            pool.apply_async(_antsApplyTransforms, (imgPath, output, args.template, warp2tmp, trans2tmp, warp2space, trans2space),
+                            error_callback= RAISE)
 
 
     pool.close()
     pool.join()
-
+    
 
     # create skeleton for each subject
     modImgsInTarget= glob(pjoin(warpDir, f'*_{args.modality}_to_target.nii.gz'))
@@ -209,14 +214,14 @@ def process(args):
 
 
     # obtain modified args from skeletonize() which will be used for other modalities than FA
-    args= skeletonize(modImgsInTarget, cases, args, statsDir, skelDir, miFile)
+    args= skeletonize(modImgsInTarget, cases, args, skelDir, miFile)
 
     skelImgsInSub= glob(pjoin(skelDir, f'*_{args.modality}_to_target_skel.nii.gz'))
     skelImgsInSub= orderCases(skelImgsInSub, cases)
 
     # roi based analysis
     if args.labelMap:
-        roi_analysis(skelImgsInSub, cases, args, statsDir, roiDir, args.ncpu)
+        roi_analysis(skelImgsInSub, cases, args, roiDir, args.ncpu)
 
     return args
 

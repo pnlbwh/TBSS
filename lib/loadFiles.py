@@ -8,10 +8,10 @@ def read_imgs(file, n):
 
     imgs=[]
     with open(file) as f:
+        content = f.read().strip()
 
-        content = f.read()
-        for line, row in enumerate(content.split()):
-            temp = [element for element in row.split(',') if element]  # handling w/space
+        for line, row in enumerate(content.split('\n')):
+            temp = [element.strip() for element in row.split(',') if element]  # handling w/space
 
             if len(temp) != n:
                 raise FileNotFoundError(f'Columns don\'t have same number of entries: check line {line} in {file}')
@@ -23,6 +23,7 @@ def read_imgs(file, n):
             imgs.append(temp)
 
     return np.array(imgs)
+
 
 def write_caselist(logDir, List=None, Dir=None):
 
@@ -67,11 +68,6 @@ def read_time(filename):
 
     return datetime(values[0], values[1], values[2], values[4], values[5], values[6])
 
+
 if __name__=='__main__':
-    from datetime import datetime
-
-    filename= pjoin('/home/tb571/Documents/TBSS/lib/tests/enigmaTemplateOutput/log/start_time.txt')
-    write_time(filename, datetime.now())
-    print(read_time(filename))
-
     pass

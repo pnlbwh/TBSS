@@ -14,9 +14,11 @@
 def orderCases(imgs, cases, masks=None):
 
     # order imgs, masks according to cases
-
-    if len(cases)!=len(imgs):
-        raise AttributeError('Number of images and cases are not same')
+    
+    n_c= len(cases)
+    n_i= len(imgs)
+    if n_c!=n_i:
+        raise AttributeError(f'Number of images {n_i}  and cases {n_c} are not same')
 
     orderedImgs= imgs.copy()
     if masks:
@@ -50,3 +52,4 @@ def orderCases(imgs, cases, masks=None):
         return (orderedImgs, orderedMasks)
     else:
         return orderedImgs
+
