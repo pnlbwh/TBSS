@@ -63,8 +63,10 @@ Table of Contents
          * [ii. --space](#ii---space)
       * [2. Voxelwise analysis](#2-voxelwise-analysis)
    * [QC](#qc)
+   * [Fill holes](#fill-holes)
    * [Multi threading](#multi-threading)
    * [NRRD support](#nrrd-support)
+   * [Troubleshooting](#troubleshooting)
    * [Reference](#reference)
 
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
@@ -624,9 +626,9 @@ Several files are created down the pipeline. They are organized with proper fold
     outDir
        |
     -------------------------------------------------------------------------
-       |           |          |       |       |       |        |        |
-       |           |          |       |       |       |        |        |
-    transform   template     FA       MD      AD      RD      log     stats
+           |                |       |       |       |        |        |
+           |                |       |       |       |        |        |
+    transform/template     FA       MD      AD      RD      log     stats
     
 ### ii. transform/template
 
@@ -824,6 +826,16 @@ Finally, if needed, you can copy the transform files in the [transform](#ii-tran
 
 **NOTE** Replace all the above directories with absolute paths.
 
+
+# Fill holes
+
+Diffusion measures having holes inside the brain region have been observed to yield slightly different results from `tbss_skeleton`
+command. To circumvent this issue, we have developed a [script](../lib/fillHoles.py) that clamps the brain region to a minimum of 10e-8.
+This step would accure some time required in preprocessing. The hole filling is not done by default. If you wish to do it, 
+use `--fill-holes` flag. However, when `--fillHoles` is used, images in `outDir/{modality}/origdata/` folder are the ones after filling holes, 
+NOT the ones you provide. 
+
+
 # Multi threading
 
 Processing can be multi-threaded over the cases. Besides, `antsMultivariateTemplateConstruction2.sh` utilizes 
@@ -845,8 +857,57 @@ See Billah, Tashrif; Bouix, Sylvain, Rathi, Yogesh; Various MRI Conversion Tools
 https://github.com/pnlbwh/conversion, 2019, DOI: 10.5281/zenodo.2584003 for more details on the conversion method.
 
 
-# Reference
 
+# Troubleshooting
+
+(1) The pipeline vastly uses Python multiprocessing. When multiple processes are spawned, RAM is found to be consumed quickly. 
+Users reported `MemoryError` which tend to occur when many processors are requested i.e. `--npcu 16`. The pipeline has 
+been revised to circumvent such error. Even though you experience one, first step would be to reduce `--ncpu`. The default
+is 4, which most research computers are capable of affording. In any case, it might be useful to reduce it to 2 only.
+If it still happens, feel free to open an issue on [here](https://github.com/pnlbwh/TBSS/issues).
+
+
+(2) `all_{modality}_skeleton` image is computed to facilitate running FSL randomise. When there is a thousand cases, merging 
+the skeletons is exhaustive in terms of memory. Hence, the program may run into `MemoryError`. This `MemoryError` is 
+distinct from multiprocessing `MemoryError`. The solution would be to omit merging of skeletons by `--noAllSkeleton` flag.
+
+
+(3) [A few sub directories](https://github.com/pnlbwh/TBSS/issues) are created in your output directory. If the pipeline fails, 
+go to your output directory and find out which subdirectory has less number of images than the cases.
+You can use a command like below to know that:
+
+
+    cd outDir/FA/preproc
+    ls | wc -l  
+    
+If the anomaly is in the first step i.e. `preprocessing`, two problems might have happened:
+
+(i) Your caselist does not uniquely represent the diffusion measures i.e. one caseied occurs in multiple file names or 
+file corresponding to your caseid does not exist. See [2. caselist](#caselist) to revise the proper way of creating caselist.
+
+
+(ii) Your image is not readable by FSL. A easy way to find out is by the following:
+
+> fslmaths origdata/001.nii.gz -mul 1 /tmp/001.nii.gz
+
+If the above fails, you should recreate your nifti files and make sure they are readable by your version of FSL.
+FSl version can be checked by 
+
+> flirt -version
+
+This incompatibility was frequently overserved with FreeWater and FreeWaterCorrected diffusion measures.
+
+
+(iii) If number of cases/images anomaly exists in other directories, check if your `antsApplyTransforms` and `tbss_skeleton` 
+executables are functining properly. 
+
+
+(4) See the `outDir/log/commands.txt` file for history of commands you tried. If you eventually fail to sort out your problems, 
+open an issue [here](https://github.com/pnlbwh/TBSS/issues).
+
+
+
+# Reference
 
 S.M. Smith, M. Jenkinson, H. Johansen-Berg, D. Rueckert, T.E. Nichols, C.E. Mackay, K.E. Watkins, 
 O. Ciccarelli, M.Z. Cader, P.M. Matthews, and T.E.J. Behrens. 

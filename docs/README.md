@@ -27,6 +27,7 @@ Table of Contents
    * [Tests](#tests)
       * [1. pipeline](#1-pipeline)
       * [2. unittest](#2-unittest)
+   * [Issues](#issues)      
     
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -151,3 +152,8 @@ You may run smaller and faster unit tests as follows.
 **NOTE** In the current release, unit tests are dependant upon the outputs of whole pipeline test. 
 This is likely to change in future. 
 
+
+
+# Issues
+
+See [Troubleshooting](./TUTORIAL.md#troubleshooting) and open an issue [here](https://github.com/pnlbwh/TBSS/issues).
