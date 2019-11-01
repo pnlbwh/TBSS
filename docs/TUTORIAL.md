@@ -201,6 +201,10 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
     --status            prints progress of TBSS pipeline so far
     
     --xfrmDir XFRMDIR   provide previously created transform/template directory, used with separate/future nonFA TBSS 
+    
+    --fillHoles           fill holes inside the brain in diffusion measure
+    
+    --noAllSkeleton       do not merge skeletons
 
 
 # Useful commands
@@ -280,7 +284,7 @@ will be calculated.
 
     --labelMap JHU-ICBM-labels-1mm.nii.gz \
     --lut data/ENIGMA_look_up_table.txt \
-    --space $FSLDIR/standard/FMRIB58_FA*.nii.gz
+    --space $FSLDIR/standard/FMRIB58_FA_1mm.nii.gz
 
 Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
 
