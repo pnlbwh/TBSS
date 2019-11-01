@@ -11,6 +11,8 @@ https://github.com/pnlbwh/tbss, 2019, DOI: https://doi.org/10.5281/zenodo.266249
 
 See [documentation](./TUTORIAL.md) for details.
 
+This software is also available as *Docker* and *Singularity* containers. See [tbss_containers](https://github.com/pnlbwh/tbss_containers)
+
 Table of Contents
 =================
 
