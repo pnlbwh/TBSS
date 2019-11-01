@@ -81,13 +81,13 @@ def process(args):
     modImgs = orderCases(modImgs, cases)
 
 
-
-    # fill holes in all modality images
-    # caveat: origdata no longer remain origdata, become hole filled origdata
-    # pool= Pool(args.ncpu)
-    # pool.map_async(fillHoles, modImgs, error_callback= RAISE)
-    # pool.close()
-    # pool.join()
+    if args.fillHoles:
+        # fill holes in all modality images
+        # caveat: origdata no longer remain origdata, become hole filled origdata
+        pool= Pool(args.ncpu)
+        pool.map_async(fillHoles, modImgs, error_callback= RAISE)
+        pool.close()
+        pool.join()
 
 
     # preprocessing ========================================================================================
