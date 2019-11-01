@@ -145,6 +145,10 @@ realized relative to --xfrmDir. On the other hand, specification of
                         help='provide previously created transform/template directory, used with separate/future nonFA TBSS')
 
 
+    parser.add_argument('--fillHoles', action='store_true', help='fill holes inside the brain in diffusion measure')
+
+    parser.add_argument('--noAllSkeleton', action='store_true', help='do not merge skeletons')
+
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
 
     args = parser.parse_args()
@@ -210,6 +214,10 @@ realized relative to --xfrmDir. On the other hand, specification of
                 args.SEARCH_RULE_MASK= lastArgs[i+1]
             elif entity=='--avg':
                 args.avg= True
+            elif entity=='--fillHoles':
+                args.fillHoles= True
+            elif entity=='--noAllSkeleton':
+                args.noAllSkeleton= True
 
     if args.ncpu==-1:
         args.ncpu= cpu_count()
@@ -409,7 +417,7 @@ realized relative to --xfrmDir. On the other hand, specification of
 
     # append the commands to serve as history
     with open(pjoin(args.logDir, 'commands.txt'), 'a') as f:
-        f.write((' ').join(args_string)+'\n')
+        f.write(datetime.now().strftime('%c')+'\t'+(' ').join(args_string)+'\n')
 
 
     for modality in modalities:
