@@ -75,5 +75,3 @@ def project_skeleton(c, imgPath, args, skelDir):
         p.wait()
 
 
-    return load(modImgSkel).get_data()
-

@@ -208,19 +208,20 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
 
     # projecting all {modality} data onto skeleton
-    res=[]
-    allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, imgs):
-            res.append(pool.apply_async(project_skeleton, (c, imgPath, args, skelDir), error_callback= RAISE))
+            pool.apply_async(project_skeleton, (c, imgPath, args, skelDir), error_callback= RAISE)
             
     pool.close()
     pool.join()
     
+    
     # this loop has been moved out of multiprocessing block to prevent memroy error
-    for i,r in enumerate(res):
-        allFAskeletonizedData[i,: ]= r._value   
+    allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
+    for i,c in enumerate(cases):
+        allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_data()
 
+    
     allFAskeletonized= pjoin(args.statsDir, f'all_{args.modality}_skeletonized.nii.gz')
     print('Creating ', allFAskeletonized)
     save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
