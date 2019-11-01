@@ -215,17 +215,20 @@ Note: Replace all the above directories with absolute paths.\n\n''')
     pool.close()
     pool.join()
     
-    
-    # this loop has been moved out of multiprocessing block to prevent memroy error
-    allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
-    for i,c in enumerate(cases):
-        allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_data()
 
-    
-    allFAskeletonized= pjoin(args.statsDir, f'all_{args.modality}_skeletonized.nii.gz')
-    print('Creating ', allFAskeletonized)
-    save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
-    print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
+    if not args.noAllSkeleton:
+
+        allFAskeletonized= pjoin(args.statsDir, f'all_{args.modality}_skeletonized.nii.gz')
+        print('Creating ', allFAskeletonized)
+
+        # this loop has been moved out of multiprocessing block to prevent memroy error
+        allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
+        for i,c in enumerate(cases):
+            allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_data()
+
+        save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
+        print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
+
 
     return args
 
