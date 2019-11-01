@@ -284,7 +284,7 @@ will be calculated.
 
     --labelMap JHU-ICBM-labels-1mm.nii.gz \
     --lut data/ENIGMA_look_up_table.txt \
-    --space $FSLDIR/standard/FMRIB58_FA_1mm.nii.gz
+    --space $FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz
 
 Even better, [ENGIMA](#1---enigma) branch does ROI based analysis as default.
 
