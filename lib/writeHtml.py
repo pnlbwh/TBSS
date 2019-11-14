@@ -75,7 +75,7 @@ height: 100%;
 
     sys.stdout= STDOUT
 
-def generate_ss(modDir, ssDir, cases, ncpu):
+def generate_ss(modDir, ssDir, cases, ncpu, **kwargs):
 
     # reorder both skeleton/* and warped/* according to caseId
     warpedImgs= glob(pjoin(modDir, 'warped', '*_to_target.nii.gz'))
@@ -83,14 +83,22 @@ def generate_ss(modDir, ssDir, cases, ncpu):
     warpedImgs= orderCases(warpedImgs, cases)
     skelImgs= orderCases(skelImgs, cases)
 
+    # get cut_coords for the figure
+    cut_coords = kwargs.pop('cut_coords', None)
+
     makeDirectory(ssDir)
 
     pool= Pool(ncpu)
     for fg,bg,c in zip(image.iter_img(skelImgs), image.iter_img(warpedImgs), cases):
         print('Taking screen shot of ', c)
         output_file = pjoin(ssDir, f'{c}.png')
-        pool.apply_async(func= plotting.plot_stat_map, args= (fg, ),
-                         kwds= {'bg_img':bg, 'dim':False, 'annotate':False, 'draw_cross':False, 'output_file':output_file, })
+        pool.apply_async(func=plotting.plot_stat_map, args=(fg, ),
+                         kwds={'bg_img': bg,
+                               'dim': False,
+                               'annotate': True,
+                               'draw_cross': False,
+                               'cut_coords': cut_coords,
+                               'output_file': output_file, })
 
     pool.close()
     pool.join()
@@ -111,6 +119,9 @@ def main():
     parser.add_argument('-n','--ncpu', type= int, help='number of threads to use, if other processes in your computer '
                         'becomes sluggish/you run into memory error, reduce --nproc', default= 4)
 
+    parser.add_argument('-i', '--cut_coords', type=int, nargs=3,
+                        help='The MNI coordinates of the point where cut is '
+                             'performed. eg) --cut_coords 1 -19 14')
 
     args = parser.parse_args()
 
@@ -129,7 +140,7 @@ def main():
     cases= read_cases(args.caselist)
 
     # generate screenshots
-    generate_ss(modDir, ssDir, cases, args.ncpu)
+    generate_ss(modDir, ssDir, cases, args.ncpu, cut_coords=args.cut_coords)
 
     # write summary HTML file
     write_html(ssDir, cases)
