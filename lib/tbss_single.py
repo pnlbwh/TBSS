@@ -15,7 +15,6 @@
 from tbssUtil import pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, Pool, RAISE, basename, listdir
 from conversion import read_cases
 from antsTemplate import antsReg
-from orderCases import orderCases
 from glob import glob
 from measureSimilarity import measureSimilarity
 from skeletonize import skeletonize
@@ -27,6 +26,7 @@ from fillHoles import fillHoles
 def process(args):
 
     cases= read_cases(args.caselist)
+    cases.sort()
 
     # organize images into different directories ===========================================================
 
@@ -68,17 +68,11 @@ def process(args):
 
 
     # modality can be one of [FA,MD,AD,RD]
-    # we could use just listdir(), but the following would be more strict and safe
+    # we could use just listdir(), but the following would be stricter and safer
+    # since cases are sorted and we named images as modDir/{c}.nii.gz
+    # the following sort puts modImgs in the same order as that of cases
     modImgs = glob(pjoin(modDir, '*.nii.gz'))
-    modImgs = orderCases(modImgs, cases)
-
-
-    for c, imgPath in zip(cases, modImgs):
-        if imgPath is not f'{c}.nii.gz':
-            move(imgPath, pjoin(modDir, f'{c}.nii.gz'))
-
-    modImgs = glob(pjoin(modDir, '*.nii.gz'))
-    modImgs = orderCases(modImgs, cases)
+    modImgs.sort()
 
 
     if args.fillHoles:
@@ -124,7 +118,7 @@ def process(args):
         check_call((' ').join(['mv', pjoin(modDir, '*.nii.gz'), pjoin(modDir, 'origdata')]), shell= True)
 
     modImgs = glob(pjoin(preprocDir, f'*{args.modality}.nii.gz'))
-    modImgs = orderCases(modImgs, cases)
+    modImgs.sort()
 
     # create template ======================================================================================
     if not args.template and args.modality=='FA':
@@ -183,8 +177,8 @@ def process(args):
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, modImgs):
         # generalize warp and affine
-        warp2tmp= glob(pjoin(args.xfrmDir, f'{c}_FA*[!Inverse]Warp.nii.gz'))[0]
-        trans2tmp= glob(pjoin(args.xfrmDir, f'{c}_FA*GenericAffine.mat'))[0]
+        warp2tmp= glob(pjoin(args.xfrmDir, f'{c}_FA*1Warp.nii.gz'))[0]
+        trans2tmp= glob(pjoin(args.xfrmDir, f'{c}_FA*0GenericAffine.mat'))[0]
         output= pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')
 
         if not args.space:
@@ -205,7 +199,7 @@ def process(args):
 
     # create skeleton for each subject
     modImgsInTarget= glob(pjoin(warpDir, f'*_{args.modality}_to_target.nii.gz'))
-    modImgsInTarget= orderCases(modImgsInTarget, cases)
+    modImgsInTarget.sort()
 
     miFile= None
     if args.modality=='FA':
@@ -217,7 +211,7 @@ def process(args):
     args= skeletonize(modImgsInTarget, cases, args, skelDir, miFile)
 
     skelImgsInSub= glob(pjoin(skelDir, f'*_{args.modality}_to_target_skel.nii.gz'))
-    skelImgsInSub= orderCases(skelImgsInSub, cases)
+    skelImgsInSub.sort()
 
     # roi based analysis
     if args.labelMap:
@@ -227,3 +221,4 @@ def process(args):
 
 if __name__=='__main__':
     pass
+

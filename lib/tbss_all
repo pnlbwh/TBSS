@@ -17,12 +17,13 @@ import argparse
 from tbssUtil import FILEDIR, LIBDIR, isfile, isdir, pjoin, makeDirectory, check_call, \
     dirname, abspath, environ, copyfile, warn, basename, getcwd, chdir, listdir, RAISE
 from conversion import loadExecutable, read_imgs_masks, read_cases
-from loadFiles import read_imgs, write_caselist, write_time
-from orderCases import orderCases
+from loadFiles import read_imgs, write_time
 from multiprocessing import Pool
 from psutil import cpu_count
 from datetime import datetime
 from _version import __version__
+from glob import glob
+from loadFiles import checkDuplicity
 
 fslDataDir= pjoin(environ['FSLDIR'], 'data')
 
@@ -444,8 +445,7 @@ realized relative to --xfrmDir. On the other hand, specification of
             makeDirectory(measureDir, args.force)
 
         dwImgs, masks= read_imgs_masks(abspath(args.input))
-
-        dwImgs, masks= orderCases(dwImgs, cases, masks)
+        warn('Assuming cases in --caselist correspond to images in --input, make sure they are ordered correctly')
 
         pool= Pool(args.ncpu)
         # need to generate diffusion measures first
@@ -464,9 +464,9 @@ realized relative to --xfrmDir. On the other hand, specification of
 
         for i, modality in enumerate(modalities):
             modDir = pjoin(args.outDir, f'{modality}')
-            # check if input directory is modDir, if not copy
-            warn('Assuming cases in --caselist correspond to images in --input, make sure they are correctly ordered')
+            warn('Assuming cases in --caselist correspond to images in --input, make sure they are ordered correctly')
             for c, imgPath in zip(cases,allModImgs[:,i]):
+            # check if input directory is modDir, if not copy
                 if dirname(imgPath) is not modDir:
                     check_call(f'cp {imgPath} {modDir}/{c}.nii.gz', shell= True)
 
@@ -482,7 +482,15 @@ realized relative to --xfrmDir. On the other hand, specification of
             modDir = pjoin(args.outDir, f'{modality}')
             # check if input directory is modDir, if not copy
             if dir is not modDir:
-                check_call(f'cp -a {dir}/*.nii.gz {modDir}/', shell= True)
+                givenImgs= glob(pjoin(dir,'*.nii.gz'))
+
+                checkDuplicity(givenImgs,cases)
+
+                for c in cases:
+                    for imgPath in givenImgs:
+                        if c in imgPath:
+                            check_call(f'cp {imgPath} {modDir}/{c}.nii.gz', shell= True)
+                            break
 
 
 
@@ -505,3 +513,4 @@ realized relative to --xfrmDir. On the other hand, specification of
 
 if __name__=='__main__':
     main()
+

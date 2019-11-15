@@ -1,6 +1,5 @@
 from tbssUtil import FILEDIR, pjoin, isfile, ConfigParser, basename
 from conversion import read_cases
-from orderCases import orderCases
 from glob import glob
 import pandas as pd
 from datetime import datetime
