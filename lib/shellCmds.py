@@ -20,7 +20,7 @@ def _antsApplyTransforms(imgPath, output, template, warp2tmp, trans2tmp, warp2sp
                             '-i', imgPath,
                             '-o', output,
                             '-r', template,
-                            '-t', warp2tmp, trans2tmp] & FG
+                            '-t', warp2tmp, '-t', trans2tmp] & FG
 
     
     else:
@@ -29,7 +29,7 @@ def _antsApplyTransforms(imgPath, output, template, warp2tmp, trans2tmp, warp2sp
                             '-i', imgPath,
                             '-o', output,
                             '-r', template,
-                            '-t', warp2space, trans2space, warp2tmp, trans2tmp] & FG
+                            '-t', warp2space, '-t', trans2space, '-t', warp2tmp, '-t', trans2tmp] & FG
         
 
 
