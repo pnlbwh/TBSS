@@ -81,6 +81,8 @@ def checkDuplicity(imgs, cases):
     #                'it exists multiple times or occurs as a substring in multiple caseids')
 
 
+    print('\nChecking for duplicity of caseids in input images')
+
     for c in cases:
         dupPath=[]
 
@@ -90,7 +92,7 @@ def checkDuplicity(imgs, cases):
 
         if len(dupPath)>1:
             print(f'One (or some) of the caseids don\'t uniquely represent input images. '
-                  f'For example caseid {c} exists as a substring in multiple images: ', dupPath)
+                  f'For example, caseid {c} exists as a substring in multiple images: ', dupPath)
             raise ValueError('Either remove conflicting imgs/cases or provide --input IMAGELIST.csv')
 
 
