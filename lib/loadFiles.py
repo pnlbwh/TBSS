@@ -69,5 +69,30 @@ def read_time(filename):
     return datetime(values[0], values[1], values[2], values[4], values[5], values[6])
 
 
+def checkDuplicity(imgs, cases):
+
+    # for c1 in cases:
+    #     count=0
+    #     for c2 in cases:
+    #         if c1==c2:
+    #             count+=1
+    #     if count>1:
+    #         warn(f'Caseid {c1} is not unique, '
+    #                'it exists multiple times or occurs as a substring in multiple caseids')
+
+
+    for c in cases:
+        dupPath=[]
+
+        for imgPath in imgs:
+            if c in imgPath:
+                dupPath.append(basename(imgPath))
+
+        if len(dupPath)>1:
+            print(f'One (or some) of the caseids don\'t uniquely represent input images. '
+                  f'For example caseid {c} exists as a substring in multiple images: ', dupPath)
+            raise ValueError('Either remove conflicting imgs/cases or provide --input IMAGELIST.csv')
+
+
 if __name__=='__main__':
     pass
