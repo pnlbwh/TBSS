@@ -202,9 +202,9 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
     
     --xfrmDir XFRMDIR   provide previously created transform/template directory, used with separate/future nonFA TBSS 
     
-    --fillHoles           fill holes inside the brain in diffusion measure
+    --noFillHole        do not fill holes inside the brain in diffusion measure
     
-    --noAllSkeleton       do not merge skeletons
+    --noAllSkeleton     do not merge skeletons
 
 
 # Useful commands
@@ -835,9 +835,9 @@ Finally, if needed, you can copy the transform files in the [transform](#ii-tran
 
 Diffusion measures having holes inside the brain region have been observed to yield slightly different results from `tbss_skeleton`
 command. To circumvent this issue, we have developed a [script](../lib/fillHoles.py) that clamps the brain region to a minimum of 10e-8.
-This step would accure some time required in preprocessing. The hole filling is not done by default. If you wish to do it, 
-use `--fill-holes` flag. However, when `--fillHoles` is used, images in `outDir/{modality}/origdata/` folder are the ones after filling holes, 
-NOT the ones you provide. 
+This step accures some time required in preprocessing. The hole filling is done by default and images in `outDir/{modality}/origdata/` 
+folder are the ones after filling holes, NOT the ones you provide. If you don't want to do it, 
+use `--noFillHole` flag.
 
 
 # Multi threading
@@ -910,7 +910,47 @@ executables are functining properly.
 open an issue [here](https://github.com/pnlbwh/TBSS/issues).
 
 
+(5) Consider the following inputs:
 
+    --input /dir/containing/FA/images/ --caselist caselist.txt
+    
+> cat caselist.txt
+    
+    1
+    11
+    23
+
+> ls /dir/containing/FA/images/
+
+    Your_1_FA.nii.gz
+    My_11_FA.nii.gz
+    His_23_FA.nii.gz
+    
+In the above example, caseid `1` exists as a substring in caseid `11`. Hence, the program won't know whether `Your_1_FA.nii.gz` or 
+`My_11_FA.nii.gz` image is pertinent to caseid `1`. In this case, it will raise an error message and ask you to provide explicit 
+imagelist containing paths as input. 
+
+```
+One (or some) of the caseids don't uniquely represent input images.
+Either remove conflicting imgs/cases or provide --input IMAGELIST.csv
+```
+
+So, the right inputs would be:
+
+    --input imagelist.csv --caselist caselist.txt
+    
+> cat imagelist.csv
+
+    /dir/containing/FA/images/Your_1_FA.nii.gz
+    /dir/containing/FA/images/My_11_FA.nii.gz
+    /dir/containing/FA/images/His_23_FA.nii.gz
+    
+
+From the order of files listed in `imagelist.csv`, now the program knows `1` is associated with `/dir/containing/FA/images/Your_1_FA.nii.gz`, 
+`/dir/containing/FA/images/My_11_FA.nii.gz` is associated with `11` and so on.
+
+
+    
 # Reference
 
 S.M. Smith, M. Jenkinson, H. Johansen-Berg, D. Rueckert, T.E. Nichols, C.E. Mackay, K.E. Watkins, 

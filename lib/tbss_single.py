@@ -75,7 +75,8 @@ def process(args):
     modImgs.sort()
 
 
-    if args.fillHoles:
+    if not args.noFillHole:
+        print('\nFilling holes inside the brain region in diffusion measure images')
         # fill holes in all modality images
         # caveat: origdata no longer remain origdata, become hole filled origdata
         pool= Pool(args.ncpu)

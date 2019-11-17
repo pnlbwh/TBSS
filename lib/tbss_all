@@ -146,7 +146,7 @@ realized relative to --xfrmDir. On the other hand, specification of
                         help='provide previously created transform/template directory, used with separate/future nonFA TBSS')
 
 
-    parser.add_argument('--fillHoles', action='store_true', help='fill holes inside the brain in diffusion measure')
+    parser.add_argument('--noFillHole', action='store_true', help='do not fill holes inside the brain in diffusion measure images')
 
     parser.add_argument('--noAllSkeleton', action='store_true', help='do not merge skeletons')
 
@@ -215,8 +215,8 @@ realized relative to --xfrmDir. On the other hand, specification of
                 args.SEARCH_RULE_MASK= lastArgs[i+1]
             elif entity=='--avg':
                 args.avg= True
-            elif entity=='--fillHoles':
-                args.fillHoles= True
+            elif entity=='--noFillHole':
+                args.noFillHole= True
             elif entity=='--noAllSkeleton':
                 args.noAllSkeleton= True
 

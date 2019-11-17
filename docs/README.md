@@ -36,7 +36,7 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 
 # Dependencies
 
-* ANTs = 2.2.0
+* ANTs = 2.3.0
 * FSL = 5.0.11
 * numpy = 1.16.2
 * pandas = 1.2.1
