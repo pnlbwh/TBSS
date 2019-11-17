@@ -321,7 +321,7 @@ realized relative to --xfrmDir. On the other hand, specification of
 
     elif args.fmrib:
         # use FSL provided templates
-        print('--fmrib template specified, using $FSLDIR/standard/FMRIB58_FA*.nii.gz templates')
+        print('--fmrib template specified, using $FSLDIR/data/standard/FMRIB58_FA*.nii.gz templates')
         args.template= pjoin(fslDataDir, 'standard', 'FMRIB58_FA_1mm.nii.gz')
         args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
 

@@ -147,6 +147,7 @@ $libDir/tbss_all -i $IMAGELIST --generate \
 -c $CASELIST \
 --modality FA,MD,AD,RD --enigma \
 --avg -o $testDir/enigmaTemplateOutput/ \
+--noFillHole \
 --ncpu -1 --force && echo --enigma branch execution successful \
 || echo --enigma branch execution FAILED
 
@@ -168,7 +169,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
 --lut $testDir/data/FreeSurferColorLUT.txt \
 --avg -o $testDir/fmribTemplateOutput/ \
---fillHoles --noAllSkeleton \
+--noAllSkeleton \
 --ncpu -1 --force && echo --fmrib branch execution successful \
 || echo --fmrib branch execution FAILED
 popd
@@ -197,6 +198,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
 --lut $testDir/data/FreeSurferColorLUT.txt \
 --avg -o $testDir/studyTemplateOutput/ \
+--noFillHole \
 --ncpu -1 --force && echo --studyTemplate branch execution successful \
 || echo --studyTemplate branch execution FAILED
 popd
@@ -216,7 +218,7 @@ pushd .
 cd $testDir/enigmaTemplateOutput
 $libDir/tbss_all -i MD/origdata,RD/origdata \
 --xfrmDir $testDir/enigmaTemplateOutput/transform \
---modality MD,RD \
+--modality MD,RD --noFillHole \
 --enigma && echo Partial --enigma branch execution successful \
 || echo Partial --enigma branch execution FAILED
 popd
@@ -229,7 +231,7 @@ pushd .
 cd $testDir/enigmaTemplateOutput/
 $libDir/tbss_all -i AD/origdata,RD/origdata \
 --xfrmDir $testDir/studyTemplateOutput/template \
---modality AD,RD \
+--modality AD,RD --noFillHole \
 --study && echo Partial --studyTemplate branch execution successful \
 || echo Partial --studyTemplate branch execution FAILED
 popd
