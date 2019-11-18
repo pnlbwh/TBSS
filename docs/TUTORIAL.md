@@ -871,8 +871,8 @@ is 4, which most research computers are capable of affording. In any case, it mi
 If it still happens, feel free to open an issue on [here](https://github.com/pnlbwh/TBSS/issues).
 
 
-(2) `all_{modality}_skeleton` image is computed to facilitate running FSL randomise. When there is a thousand cases, merging 
-the skeletons is exhaustive in terms of memory. Hence, the program may run into `MemoryError`. This `MemoryError` is 
+(2) `all_{modality}_skeleton` image is computed to facilitate running FSL randomise. When there are many cases (i.e. above 500), merging 
+the skeletons can be exhaustive in terms of memory. Hence, the program may run into `MemoryError`. This `MemoryError` is 
 distinct from multiprocessing `MemoryError`. The solution would be to omit merging of skeletons by `--noAllSkeleton` flag.
 
 
