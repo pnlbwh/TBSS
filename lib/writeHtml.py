@@ -17,7 +17,6 @@ import sys, argparse
 from nilearn import image, plotting
 from tbssUtil import abspath, dirname, pjoin, makeDirectory, RAISE
 from glob import glob
-from orderCases import orderCases
 from conversion import read_cases
 from multiprocessing import Pool
 
@@ -79,9 +78,9 @@ def generate_ss(modDir, ssDir, cases, ncpu):
 
     # reorder both skeleton/* and warped/* according to caseId
     warpedImgs= glob(pjoin(modDir, 'warped', '*_to_target.nii.gz'))
+    warpedImgs.sort()
     skelImgs= glob(pjoin(modDir, 'skeleton', '*_to_target_skel.nii.gz'))
-    warpedImgs= orderCases(warpedImgs, cases)
-    skelImgs= orderCases(skelImgs, cases)
+    skelImgs.sort()
 
     makeDirectory(ssDir)
 
@@ -128,6 +127,7 @@ def main():
 
 
     cases= read_cases(args.caselist)
+    cases.sort()
 
     # generate screenshots
     generate_ss(modDir, ssDir, cases, args.ncpu)
