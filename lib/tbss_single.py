@@ -190,7 +190,7 @@ def process(args):
 
         else:
             # print(f'Warping {imgPath} to template-->standard space ...')
-            pool.apply_async(_antsApplyTransforms, (imgPath, output, args.template, warp2tmp, trans2tmp, warp2space, trans2space),
+            pool.apply_async(_antsApplyTransforms, (imgPath, output, args.space, warp2tmp, trans2tmp, warp2space, trans2space),
                             error_callback= RAISE)
 
 
