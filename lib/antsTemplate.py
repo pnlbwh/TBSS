@@ -65,7 +65,14 @@ def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
     # use Popen() so we can wait()   
     p = Popen(cmd, shell=True, stdout= f, stderr= sys.stdout)
     p.wait()
-
+    
 
     if f.name!='<sys.stdout>':
         f.close()
+
+    # remove redundant registration files
+    if basename(outPrefix)!='tmp2space':
+        remove(outPrefix+'Warped.nii.gz')
+    remove(outPrefix+'1InverseWarp.nii.gz')
+    remove(outPrefix+'InverseWarped.nii.gz')
+
