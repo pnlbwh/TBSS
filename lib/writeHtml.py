@@ -75,16 +75,13 @@ height: 100%;
 
     sys.stdout= STDOUT
 
-def generate_ss(modDir, ssDir, cases, ncpu, **kwargs):
+def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
 
     # reorder both skeleton/* and warped/* according to caseId
     warpedImgs= glob(pjoin(modDir, 'warped', '*_to_target.nii.gz'))
     skelImgs= glob(pjoin(modDir, 'skeleton', '*_to_target_skel.nii.gz'))
     warpedImgs= orderCases(warpedImgs, cases)
     skelImgs= orderCases(skelImgs, cases)
-
-    # get cut_coords for the figure
-    cut_coords = kwargs.pop('cut_coords', None)
 
     makeDirectory(ssDir)
 
