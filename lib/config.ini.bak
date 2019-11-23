@@ -1,6 +1,0 @@
-[DEFAULT]
-N_CPU = 4
-diffusionMeasures = FA,MD,AD,RD
-verbose = 0
-outDir = .
-modalities = FA,MD,AD,RD

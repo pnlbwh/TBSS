@@ -11,7 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool
+from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit, RAISE
 import numpy as np
 from project_skeleton import project_skeleton
 
@@ -67,14 +67,14 @@ def calc_mean(imgs, shape, qc):
     return (allFAdata, cumsumFA)
 
 
-def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir, miFile):
+def skeletonize(imgs, cases, args, skelDir, miFile):
 
     target= load(args.template)
     targetData= target.get_data()
     X,Y,Z= targetData.shape[0], targetData.shape[1], targetData.shape[2]
 
     # provide the user with allFA sequence so he knows which volume he is looking at while scrolling through allFA
-    seqFile = pjoin(statsDir, 'allFAsequence.txt')
+    seqFile = pjoin(args.statsDir, f'all_{args.modality}_sequence.txt')
     with open(seqFile, 'w') as f:
         f.write('index,caseid\n')
         for i, c in enumerate(cases):
@@ -85,7 +85,7 @@ def skeletonize(imgs, cases, args, statsDir, skelDir, xfrmDir, miFile):
     allFAdata, cumsumFA= calc_mean(imgs, (X,Y,Z), args.qc)
 
     if args.qc:
-        allFA= pjoin(statsDir, f'all_{args.modality}.nii.gz')
+        allFA= pjoin(args.statsDir, f'all_{args.modality}.nii.gz')
         save_nifti(allFA, np.moveaxis(allFAdata, 0, -1), target.affine, target.header)
 
         print(f'''\n\nQC the warped {args.modality} images: {allFA}, view {seqFile} for index of volumes in all_FA.nii.gz. 
@@ -97,7 +97,7 @@ It might be helpful to re-run registration for warped images that are bad.
 
 Moving images are   :   {args.outDir}/preproc/
 Target is           :   {args.template}
-Transform files are :   {xfrmDir}/
+Transform files are :   {args.xfrmDir}/
 Warped images are   :   {args.outDir}/warped/
 
 Save any re-registered images in {args.outDir}/warped/ with the same name as before
@@ -128,7 +128,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
 
     meanFAdata = cumsumFA/len(imgs)
-    meanFA = pjoin(statsDir, 'mean_FA.nii.gz')
+    meanFA = pjoin(args.statsDir, 'mean_FA.nii.gz')
 
     # outDir should contain
     # all_{modality}.nii.gz
@@ -143,7 +143,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
         if not args.templateMask:
             print('Creating template mask ...')
-            args.templateMask= pjoin(statsDir, 'mean_FA_mask.nii.gz')
+            args.templateMask= pjoin(args.statsDir, 'mean_FA_mask.nii.gz')
             meanFAmaskData = (meanFAdata > 0) * 1
             save_nifti(args.templateMask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
@@ -167,9 +167,9 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
         if not args.skeleton:
             print('Creating all three of skeleton, skeletonMask, and skeletonMaskDst ...')
-            args.skeleton= pjoin(statsDir, 'mean_FA_skeleton.nii.gz')
-            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
-            args.skeletonMaskDst= pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            args.skeleton= pjoin(args.statsDir, 'mean_FA_skeleton.nii.gz')
+            args.skeletonMask = pjoin(args.statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMaskDst= pjoin(args.statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
             _create_skeleton(meanFA, args.skeleton)
             _create_skeletonMask(args.skeleton, args.SKEL_THRESH, args.skeletonMask)
@@ -178,8 +178,8 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
         if args.skeleton and not (args.skeletonMask or args.skeletonMaskDst):
             print('Creating skeletonMask and skeletonMaskDst ...')
-            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
-            args.skeletonMaskDst= pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            args.skeletonMask = pjoin(args.statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMaskDst= pjoin(args.statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
             _create_skeletonMask(args.skeleton, args.SKEL_THRESH, args.skeletonMask)
             _create_skeletonMaskDst(args.templateMask, args.skeletonMask, args.skeletonMaskDst)
@@ -187,14 +187,14 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
         if args.skeleton and not args.skeletonMask and args.skeletonMaskDst:
             print('Creating skeletonMask ...')
-            args.skeletonMask = pjoin(statsDir, 'mean_FA_skeleton_mask.nii.gz')
+            args.skeletonMask = pjoin(args.statsDir, 'mean_FA_skeleton_mask.nii.gz')
 
             _create_skeletonMask(args.skeleton, args.SKEL_THRESH, args.skeletonMask)
 
 
         if (args.skeleton and args.skeletonMask) and not args.skeletonMaskDst:
             print('Creating skeletonMaskDst ...')
-            args.skeletonMaskDst = pjoin(statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
+            args.skeletonMaskDst = pjoin(args.statsDir, 'mean_FA_skeleton_mask_dst.nii.gz')
 
             _create_skeletonMaskDst(args.templateMask, args.skeletonMask, args.skeletonMaskDst)
 
@@ -208,25 +208,27 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
 
     # projecting all {modality} data onto skeleton
-    res=[]
-    allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
     pool= Pool(args.ncpu)
     for c, imgPath in zip(cases, imgs):
-
-        # res.append(project_skeleton(imgPath, c, args, meanFA, skelDir))
-        res.append(pool.apply_async(project_skeleton, (c, imgPath, args, meanFA, skelDir)))
-
-
-    for i,r in enumerate(res):
-        # res contains data in the same order imgs was passed
-        allFAskeletonizedData[i,: ]= r.get()
-
+            pool.apply_async(project_skeleton, (c, imgPath, args, skelDir), error_callback= RAISE)
+            
     pool.close()
     pool.join()
+    
 
-    allFAskeletonized= pjoin(statsDir, f'all_{args.modality}_skeletonized.nii.gz')
-    print('Creating ', allFAskeletonized)
-    save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
-    print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
+    if not args.noAllSkeleton:
+
+        allFAskeletonized= pjoin(args.statsDir, f'all_{args.modality}_skeletonized.nii.gz')
+        print('Creating ', allFAskeletonized)
+
+        # this loop has been moved out of multiprocessing block to prevent memroy error
+        allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
+        for i,c in enumerate(cases):
+            allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_data()
+
+        save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
+        print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
+
 
     return args
+

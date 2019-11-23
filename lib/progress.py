@@ -1,17 +1,15 @@
 from tbssUtil import FILEDIR, pjoin, isfile, ConfigParser, basename
 from conversion import read_cases
-from orderCases import orderCases
 from glob import glob
 import pandas as pd
 from datetime import datetime
 from loadFiles import read_time
 
 
-def show_progress(verbose= False):
+def show_progress(outDir, verbose= False):
 
-    config = ConfigParser()
-    config.read(pjoin(FILEDIR, 'config.ini'))
-    outDir = config['DEFAULT']['outDir']
+    config= ConfigParser()
+    config.read(pjoin(outDir, 'log', 'config.ini'))
     modalities= [x for x in config['DEFAULT']['modalities'].split(',')]
 
     # read caselist

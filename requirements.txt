@@ -1,9 +1,10 @@
 numpy
 nibabel
 nilearn
-dipy
+dipy==0.16.0
 psutil
 plumbum
 pandas
 pynrrd
+pytest
 git+https://github.com/pnlbwh/conversion.git

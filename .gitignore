@@ -5,5 +5,8 @@
 .idea
 .bak
 __pycache__/
+.pytest_cache/
 test_data/
 enigmaDTI*
+*TemplateOutput/
+

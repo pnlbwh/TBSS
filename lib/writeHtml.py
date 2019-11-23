@@ -15,9 +15,8 @@
 
 import sys, argparse
 from nilearn import image, plotting
-from tbssUtil import abspath, dirname, pjoin, makeDirectory
+from tbssUtil import abspath, dirname, pjoin, makeDirectory, RAISE
 from glob import glob
-from orderCases import orderCases
 from conversion import read_cases
 from multiprocessing import Pool
 
@@ -79,9 +78,9 @@ def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
 
     # reorder both skeleton/* and warped/* according to caseId
     warpedImgs= glob(pjoin(modDir, 'warped', '*_to_target.nii.gz'))
+    warpedImgs.sort()
     skelImgs= glob(pjoin(modDir, 'skeleton', '*_to_target_skel.nii.gz'))
-    warpedImgs= orderCases(warpedImgs, cases)
-    skelImgs= orderCases(skelImgs, cases)
+    skelImgs.sort()
 
     makeDirectory(ssDir)
 
@@ -89,6 +88,7 @@ def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
     for fg,bg,c in zip(image.iter_img(skelImgs), image.iter_img(warpedImgs), cases):
         print('Taking screen shot of ', c)
         output_file = pjoin(ssDir, f'{c}.png')
+<<<<<<< HEAD
         pool.apply_async(func=plotting.plot_stat_map, args=(fg, ),
                          kwds={'bg_img': bg,
                                'dim': False,
@@ -96,6 +96,10 @@ def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
                                'draw_cross': False,
                                'cut_coords': cut_coords,
                                'output_file': output_file, })
+=======
+        pool.apply_async(func= plotting.plot_stat_map, args= (fg, ),
+            kwds= {'bg_img':bg, 'dim':False, 'annotate':False, 'draw_cross':False, 'output_file':output_file, }, error_callback= RAISE)
+>>>>>>> 0c3e9712bf43e52a26003021089b7ecca9faff48
 
     pool.close()
     pool.join()
@@ -104,17 +108,18 @@ def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
 def main():
 
     parser = argparse.ArgumentParser(description='Generates an HTML file with skeleton overlaid upon the diffusivity measure '
-                                                 'i.e. FA,MD,AD,RD etc')
+                                                 'i.e. FA,MD,AD,RD etc', formatter_class= argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-d','--dir', type=str, help='TBSS output directory where results are stored in --modality sudirectory; '
-                                                   'you should have write permission into the directories')
+    parser.add_argument('-d','--dir', type=str, default=argparse.SUPPRESS,
+                        help='TBSS output directory where results are stored in --modality sudirectory; '
+                             'you should have write permission into the directories')
 
     parser.add_argument('-m','--modality', type=str, default='FA', help='Modality={FA,MD,AD,RD,...} of images')
-    parser.add_argument('-c','--caselist', type=str, help='caseIds from the caselist are used to label screenshots, '
-                                                     'default: outDir/log/caselist.txt')
+    parser.add_argument('-c','--caselist', type=str, default=argparse.SUPPRESS,
+                        help='caseIds from the caselist are used to label screenshots, default: outDir/log/caselist.txt')
 
-    parser.add_argument('-n','--ncpu', type= int, help='number of threads to use, if other processes in your computer '
-                        'becomes sluggish/you run into memory error, reduce --nproc', default= 4)
+    parser.add_argument('-n','--ncpu', type= int, default=4, help='number of threads to use, if other processes in your computer '
+                        'becomes sluggish/you run into memory error, reduce --nproc')
 
     parser.add_argument('-i', '--cut_coords', type=int, nargs=3,
                         help='The MNI coordinates of the point where cut is '
@@ -135,6 +140,7 @@ def main():
 
 
     cases= read_cases(args.caselist)
+    cases.sort()
 
     # generate screenshots
     generate_ss(modDir, ssDir, cases, args.ncpu, cut_coords=args.cut_coords)

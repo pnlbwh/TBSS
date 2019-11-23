@@ -18,11 +18,6 @@ import pandas as pd
 from multiprocessing import Pool
 import re
 
-config = ConfigParser()
-config.read(pjoin(FILEDIR,'config.ini'))
-N_CPU = int(config['DEFAULT']['N_CPU'])
-
-
 def average_labels(labels):
 
     commonLabels=[]
@@ -115,7 +110,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         print('Made ', avg_stat_file)
 
 
-def roi_analysis(imgs, cases, args, statsDir, roiDir):
+def roi_analysis(imgs, cases, args, roiDir, N_CPU):
 
     intLabels = load(args.labelMap).get_data()
     label2name = parse_labels(np.unique(intLabels)[1:], args.lut)
@@ -125,8 +120,8 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
     for c, imgPath in zip(cases, imgs):
 
         # subject_stat(imgPath, c, args.modality, label2name, commonLabels, intLabels, roiDir, args.avg)
-        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, intLabels,
-                                                    roiDir, args.avg), error_callback=RAISE)
+        pool.apply_async(func= subject_stat, args= (imgPath, c, args.modality, label2name, commonLabels, 
+                                                    intLabels, roiDir, args.avg), error_callback= RAISE)
 
     pool.close()
     pool.join()
@@ -144,7 +139,7 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
         # num2str() text formatting is for precision control
         df_comb.loc[i]= np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
-    combined_stat= pjoin(statsDir, f'{args.modality}_combined_roi.csv')
+    combined_stat= pjoin(args.statsDir, f'{args.modality}_combined_roi.csv')
     df_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_stat)
     print('Made ', combined_stat)
 
@@ -158,10 +153,11 @@ def roi_analysis(imgs, cases, args, statsDir, roiDir):
             # num2str() text formatting is for precision control
             df_avg_comb.loc[i] = np.append(c, np.array([num2str(x) for x in df['Average'].values]))
 
-        combined_avg_stat= pjoin(statsDir, f'{args.modality}_combined_roi_avg.csv')
+        combined_avg_stat= pjoin(args.statsDir, f'{args.modality}_combined_roi_avg.csv')
         df_avg_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_avg_stat)
         print('Made ', combined_avg_stat)
 
 
 if __name__=='__main__':
     pass
+

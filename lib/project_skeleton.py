@@ -12,9 +12,9 @@
 # ===============================================================================
 
 from tbssUtil import pjoin, load, check_call
+from subprocess import Popen, PIPE
 
-
-def project_skeleton(c, imgPath, args, meanFA, skelDir):
+def project_skeleton(c, imgPath, args, skelDir):
 
     '''
     Part of FSL (ID: 5.0.11)
@@ -45,24 +45,33 @@ def project_skeleton(c, imgPath, args, meanFA, skelDir):
 
     if args.modality == 'FA':
 
-        check_call((' ').join(['tbss_skeleton',
-                              '-i', meanFA,
-                              '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
-                              imgPath, modImgSkel,
-                              '-s', args.skeletonMask]),
-                              shell= True)
+        cmd=(' ').join(['tbss_skeleton',
+                        '-i', imgPath,
+                        '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
+                        imgPath, modImgSkel,
+                        '-s', args.skeletonMask])
+
+        # check_call(cmd, shell= True)
+        
+        # use Popen() so we can wait()
+        p = Popen(cmd, shell=True)
+        p.wait()
+
 
     else:
+        
+        cmd= (' ').join(['tbss_skeleton',
+                         '-i', imgPath,
+                         '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
+                         pjoin(args.outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
+                         modImgSkel, '-a', imgPath,
+                         '-s', args.skeletonMask])
+        
+        
+        # check_call(cmd, shell= True)
 
-        check_call((' ').join(['tbss_skeleton',
-                              '-i', meanFA,
-                              '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
-                              pjoin(args.outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
-                              modImgSkel, '-a', imgPath,
-                              '-s', args.skeletonMask]),
-                              shell= True)
+        # use Popen() so we can wait()       
+        p = Popen(cmd, shell=True)
+        p.wait()
 
-
-
-    return load(modImgSkel).get_data()
 

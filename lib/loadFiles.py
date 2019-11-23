@@ -8,10 +8,10 @@ def read_imgs(file, n):
 
     imgs=[]
     with open(file) as f:
+        content = f.read().strip()
 
-        content = f.read()
-        for line, row in enumerate(content.split()):
-            temp = [element for element in row.split(',') if element]  # handling w/space
+        for line, row in enumerate(content.split('\n')):
+            temp = [element.strip() for element in row.split(',') if element]  # handling w/space
 
             if len(temp) != n:
                 raise FileNotFoundError(f'Columns don\'t have same number of entries: check line {line} in {file}')
@@ -24,10 +24,12 @@ def read_imgs(file, n):
 
     return np.array(imgs)
 
+
 def write_caselist(logDir, List=None, Dir=None):
 
     if Dir is not None:
         imgs= glob(pjoin(Dir, '*.nii.gz'))
+        imgs.sort()
 
     elif List is not None:
         try:
@@ -66,11 +68,33 @@ def read_time(filename):
 
     return datetime(values[0], values[1], values[2], values[4], values[5], values[6])
 
+
+def checkDuplicity(imgs, cases):
+
+    # for c1 in cases:
+    #     count=0
+    #     for c2 in cases:
+    #         if c1==c2:
+    #             count+=1
+    #     if count>1:
+    #         warn(f'Caseid {c1} is not unique, '
+    #                'it exists multiple times or occurs as a substring in multiple caseids')
+
+
+    print('\nChecking for duplicity of caseids in input images')
+
+    for c in cases:
+        dupPath=[]
+
+        for imgPath in imgs:
+            if c in imgPath:
+                dupPath.append(basename(imgPath))
+
+        if len(dupPath)>1:
+            print(f'One (or some) of the caseids don\'t uniquely represent input images. '
+                  f'For example, caseid {c} exists as a substring in multiple images: ', dupPath)
+            raise ValueError('Either remove conflicting imgs/cases or provide --input IMAGELIST.csv')
+
+
 if __name__=='__main__':
-    from datetime import datetime
-
-    filename= pjoin('/home/tb571/Documents/TBSS/lib/tests/enigmaTemplateOutput/log/start_time.txt')
-    write_time(filename, datetime.now())
-    print(read_time(filename))
-
     pass
