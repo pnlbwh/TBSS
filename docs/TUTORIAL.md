@@ -319,6 +319,15 @@ Amazing, isn't it!
 Finally, TBSS pipeline can generate an HTML file with skeleton overlaid upon the diffusivity measure for all cases.
 
     lib/writeHtml.py --dir tbss/output/directory
+    lib/writeHtml.py --dir tbss/output/directory --cut_coords enigma
+    lib/writeHtml.py --dir tbss/output/directory --cut_coords fmrib
+    lib/writeHtml.py --dir tbss/output/directory --cut_coords 1,-19,14 (comma separated, no spaces)
+    
+The default `--cut_coords` is `auto` which resolves to the method `find_xyz_cut_coords(img, mask_img=None, activation_threshold=None)` 
+defined in [nilearn.plotting.find_cuts](https://github.com/nilearn/nilearn/blob/master/nilearn/plotting/find_cuts.py).
+However, we experimentally devised `--cut_coords enigma` == `1,-19,14` and `--cut_coords fmrib`== `-17,-24,14` for fixing the cut coordinates 
+to be used across all images in a study.
+    
     
     
 

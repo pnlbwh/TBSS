@@ -74,7 +74,7 @@ height: 100%;
 
     sys.stdout= STDOUT
 
-def generate_ss(modDir, ssDir, cases, ncpu):
+def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
 
     # reorder both skeleton/* and warped/* according to caseId
     warpedImgs= glob(pjoin(modDir, 'warped', '*_to_target.nii.gz'))
@@ -83,34 +83,43 @@ def generate_ss(modDir, ssDir, cases, ncpu):
     skelImgs.sort()
 
     makeDirectory(ssDir)
-
+    
     pool= Pool(ncpu)
     for fg,bg,c in zip(image.iter_img(skelImgs), image.iter_img(warpedImgs), cases):
         print('Taking screen shot of ', c)
         output_file = pjoin(ssDir, f'{c}.png')
         pool.apply_async(func= plotting.plot_stat_map, args= (fg, ),
-            kwds= {'bg_img':bg, 'dim':False, 'annotate':False, 'draw_cross':False, 'output_file':output_file, }, error_callback= RAISE)
+            kwds= {'bg_img':bg, 
+                   'dim':False, 
+                   'annotate':False, 
+                   'draw_cross':False, 
+                   'cut_coords': cut_coords, 
+                   'resampling_interpolation': 'nearest',
+                   'output_file':output_file}, error_callback= RAISE)
 
     pool.close()
     pool.join()
-
+    
 
 def main():
 
     parser = argparse.ArgumentParser(description='Generates an HTML file with skeleton overlaid upon the diffusivity measure '
                                                  'i.e. FA,MD,AD,RD etc', formatter_class= argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-d','--dir', type=str, default=argparse.SUPPRESS,
+    parser.add_argument('-d','--dir', type=str, required= True, default=argparse.SUPPRESS,
                         help='TBSS output directory where results are stored in --modality sudirectory; '
                              'you should have write permission into the directories')
 
     parser.add_argument('-m','--modality', type=str, default='FA', help='Modality={FA,MD,AD,RD,...} of images')
-    parser.add_argument('-c','--caselist', type=str, default=argparse.SUPPRESS,
+    parser.add_argument('-c','--caselist', type=str, required= True, default=argparse.SUPPRESS,
                         help='caseIds from the caselist are used to label screenshots, default: outDir/log/caselist.txt')
 
     parser.add_argument('-n','--ncpu', type= int, default=4, help='number of threads to use, if other processes in your computer '
                         'becomes sluggish/you run into memory error, reduce --nproc')
-
+    
+    parser.add_argument('--cut_coords', type=str, help='The MNI coordinates of the point where cut is '
+                        'performed. Examples: --cut_coords enigma, --cut_coords fmrib, --cut_coords 1,-19,14 (comma separated, no spaces) '
+                        'See details in docs/TUTORIAL.md', default='auto')
 
     args = parser.parse_args()
 
@@ -128,9 +137,19 @@ def main():
 
     cases= read_cases(args.caselist)
     cases.sort()
-
+    
+    if args.cut_coords=='enigma':
+        cut_coords=(1, -19, 14)
+    elif args.cut_coords=='fmrib':
+        cut_coords=(-17, -24, 14)
+    elif args.cut_coords=='auto':
+        cut_coords=None
+    else:
+        cut_coords=tuple(int(i) for i in args.cut_coords.split(','))
+    
+    
     # generate screenshots
-    generate_ss(modDir, ssDir, cases, args.ncpu)
+    generate_ss(modDir, ssDir, cases, args.ncpu, cut_coords)
 
     # write summary HTML file
     write_html(ssDir, cases)
