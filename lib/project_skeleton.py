@@ -12,7 +12,6 @@
 # ===============================================================================
 
 from tbssUtil import pjoin, load, check_call
-from subprocess import Popen, PIPE
 
 def project_skeleton(c, imgPath, args, skelDir):
 
