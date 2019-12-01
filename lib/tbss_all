@@ -492,11 +492,15 @@ realized relative to --xfrmDir. On the other hand, specification of
                 checkDuplicity(givenImgs,cases)
 
                 for c in cases:
+                    found= False
                     for imgPath in givenImgs:
                         if c in imgPath:
                             check_call(f'cp {imgPath} {modDir}/{c}.nii.gz', shell= True)
+                            found= True
                             break
-
+                    if not found:
+                        raise FileNotFoundError(f'Image corresponding to caseid {c} couldn\'t be found in {dir}\n'
+                                                 'Either remove the caseid or make sure corresponding image is there')
 
 
     from tbss_single import process
