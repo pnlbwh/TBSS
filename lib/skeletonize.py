@@ -55,16 +55,21 @@ def calc_mean(imgs, shape, qc):
     allFAdata= None
     if qc:
         allFAdata= np.zeros((len(imgs), shape[0], shape[1], shape[2]), dtype= 'float32')
-    cumsumFA= np.zeros(shape, dtype= 'float32')
-
     
+    cumsumFA= np.zeros(shape, dtype= 'float32')
+    consecutiveFA= np.inf*np.ones((2,shape[0],shape[1],shape[2]))
     for i, imgPath in enumerate(imgs):
         data= load(imgPath).get_data().clip(min= 0.)
         cumsumFA+= data
+        
+        consecutiveFA[0,: ]= data
+        dynminFA= consecutiveFA.min(axis=0)
+        consecutiveFA[1,: ]= dynminFA
+        
         if qc:
             allFAdata[i,: ]= data
 
-    return (allFAdata, cumsumFA)
+    return (allFAdata, cumsumFA, dynminFA)
 
 
 def skeletonize(imgs, cases, args, skelDir, miFile):
@@ -82,7 +87,7 @@ def skeletonize(imgs, cases, args, skelDir, miFile):
 
     
     print(f'Calculating mean {args.modality} over all the cases ...')
-    allFAdata, cumsumFA= calc_mean(imgs, (X,Y,Z), args.qc)
+    allFAdata, cumsumFA, dynminFA= calc_mean(imgs, (X,Y,Z), args.qc)
 
     if args.qc:
         allFA= pjoin(args.statsDir, f'all_{args.modality}.nii.gz')
@@ -124,7 +129,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         while input('Press Enter when you are done with QC/re-registration: '):
             pass
 
-        allFAdata, cumsumFA= calc_mean(imgs, targetData.shape, args.qc)
+        allFAdata, cumsumFA, dynminFA= calc_mean(imgs, targetData.shape, args.qc)
 
 
     meanFAdata = cumsumFA/len(imgs)
@@ -144,7 +149,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         if not args.templateMask:
             print('Creating template mask ...')
             args.templateMask= pjoin(args.statsDir, 'mean_FA_mask.nii.gz')
-            meanFAmaskData = (meanFAdata > 0) * 1
+            meanFAmaskData = (dynminFA > 0) * 1
             save_nifti(args.templateMask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
         else:
