@@ -145,10 +145,12 @@ realized relative to --xfrmDir. On the other hand, specification of
     parser.add_argument('--xfrmDir', type=str,
                         help='provide previously created transform/template directory, used with separate/future nonFA TBSS')
 
-
     parser.add_argument('--noFillHole', action='store_true', help='do not fill holes inside the brain in diffusion measure images')
 
     parser.add_argument('--noAllSkeleton', action='store_true', help='do not merge skeletons')
+
+    parser.add_argument('--noHtml', action='store_true', 
+                        help='do not generate summary.html file containing screenshots of axial, lateral, and sagital views')
 
     diffusionMeasures = ['FA', 'MD', 'AD', 'RD']
 
@@ -219,6 +221,9 @@ realized relative to --xfrmDir. On the other hand, specification of
                 args.noFillHole= True
             elif entity=='--noAllSkeleton':
                 args.noAllSkeleton= True
+            elif entity=='--noHtml':
+                args.noHtml= True
+
 
     if args.ncpu==-1:
         args.ncpu= cpu_count()
