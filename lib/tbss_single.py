@@ -12,7 +12,8 @@
 # ===============================================================================
 
 
-from tbssUtil import pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, Pool, RAISE, basename, listdir
+from tbssUtil import pjoin, move, isfile, makeDirectory, check_call, chdir, getcwd, Pool, RAISE, basename, \
+    listdir, Popen, FILEDIR, isdir, rmtree
 from conversion import read_cases
 from antsTemplate import antsReg
 from glob import glob
@@ -96,6 +97,9 @@ def process(args):
         print('Index file location has changed, see ', pjoin(preprocDir, 'slicesdir', 'index.html'))
 
         # rename args.modality/FA to args.modality/preproc
+        # if previous preprocDir is not removed, modDir/FA gets moved inside preprocDir as a directory, not its contents
+        if isdir(preprocDir):
+            rmtree(preprocDir)
         move(pjoin(modDir, 'FA'), preprocDir)
     else:
         print(f'Preprocessing {args.modality} images using FA mask (eroding them and zeroing the end slices) ...')
@@ -149,7 +153,7 @@ def process(args):
         # find warp and affine of FA image to args.template for each case
         if args.modality=='FA':
             print(f'Registering FA images to {args.template} space ..')
-            makeDirectory(args.xfrmDir, True)
+            makeDirectory(args.xfrmDir, args.force)
             pool= Pool(args.ncpu)
             for c, imgPath in zip(cases, modImgs):
                 pool.apply_async(antsReg, (args.template, imgPath, pjoin(args.xfrmDir, f'{c}_FA'), args.logDir, args.verbose),
@@ -218,6 +222,26 @@ def process(args):
     if args.labelMap:
         roi_analysis(skelImgsInSub, cases, args, roiDir, args.ncpu)
 
+    
+    if not args.noHtml:
+        
+        cut_coords=''
+        
+        if args.enigma:
+            cut_coords='--cut_coords enigma'
+        
+        elif args.fmrib:
+            cut_coords='--cut_coords fmrib'
+            
+        p= Popen(' '.join([pjoin(FILEDIR, 'writeHtml.py'), '-d', args.outDir, 
+                               '-m', args.modality, '-n', str(args.ncpu), cut_coords]), shell= True)
+        p.wait()
+        
+        print(f'\nIf you think the slices from all cases in {modDir}/slicesdir/summary.html file '
+               'are not cut in the same position, run lib/writeHtml.py separately '
+               'with a suitable --cut_coords parameter. '
+               'See \"lib/writeHtml.py --help\" for details')
+    
     return args
 
 if __name__=='__main__':
