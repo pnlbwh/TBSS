@@ -11,8 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import pjoin, load, check_call
-from subprocess import Popen, PIPE
+from tbssUtil import pjoin, load, check_call, Popen
 
 def project_skeleton(c, imgPath, args, skelDir):
 

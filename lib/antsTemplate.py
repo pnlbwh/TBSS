@@ -12,7 +12,6 @@
 # ===============================================================================
 
 from tbssUtil import *
-from subprocess import Popen
 
 def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
 
@@ -42,6 +41,9 @@ def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
 
 
 def antsReg(fixedImg, movingImg, outPrefix, logDir, verbose):
+    
+    if isfile(outPrefix+'1Warp.nii.gz'):
+        return
 
     if verbose:
         f= sys.stdout

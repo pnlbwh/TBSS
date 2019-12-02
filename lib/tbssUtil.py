@@ -18,7 +18,7 @@ import unittest
 from subprocess import check_call
 import sys
 from configparser import ConfigParser
-from subprocess import check_call
+from subprocess import check_call, Popen
 from multiprocessing import Pool
 
 FILEDIR= abspath(dirname(__file__))

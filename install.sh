@@ -169,7 +169,7 @@ $libDir/tbss_all -i FA/origdata,MD/origdata,AD/origdata,RD/origdata \
 -l $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz \
 --lut $testDir/data/FreeSurferColorLUT.txt \
 --avg -o $testDir/fmribTemplateOutput/ \
---noAllSkeleton \
+--noAllSkeleton --noHtml \
 --ncpu -1 --force && echo --fmrib branch execution successful \
 || echo --fmrib branch execution FAILED
 popd

@@ -20,6 +20,11 @@ from glob import glob
 from conversion import read_cases
 from multiprocessing import Pool
 
+# the following import is for preventing X forwarding error from nilearn
+# nilearn may import its matplotlib again, yet the following backend specification prevails
+import matplotlib
+matplotlib.use('Agg')
+
 def write_html(ssDir, cases):
 
     STDOUT= sys.stdout
@@ -82,8 +87,7 @@ def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
     skelImgs= glob(pjoin(modDir, 'skeleton', '*_to_target_skel.nii.gz'))
     skelImgs.sort()
 
-    makeDirectory(ssDir)
-    
+    makeDirectory(ssDir) 
     pool= Pool(ncpu)
     for fg,bg,c in zip(image.iter_img(skelImgs), image.iter_img(warpedImgs), cases):
         print('Taking screen shot of ', c)
@@ -99,7 +103,15 @@ def generate_ss(modDir, ssDir, cases, ncpu, cut_coords):
 
     pool.close()
     pool.join()
-    
+        
+    '''
+    # the following loop is for debugging
+    # it will be removed once nilearn.plotting.plot_stat_map is found to behave in a stable manner
+    for fg,bg,c in zip(image.iter_img(skelImgs), image.iter_img(warpedImgs), cases):
+        print('Taking screen shot of ', c)
+        output_file = pjoin(ssDir, f'{c}.png')
+        plotting.plot_stat_map(fg, bg_img= bg, output_file= output_file)
+    '''
 
 def main():
 
@@ -111,8 +123,6 @@ def main():
                              'you should have write permission into the directories')
 
     parser.add_argument('-m','--modality', type=str, default='FA', help='Modality={FA,MD,AD,RD,...} of images')
-    parser.add_argument('-c','--caselist', type=str, required= True, default=argparse.SUPPRESS,
-                        help='caseIds from the caselist are used to label screenshots, default: outDir/log/caselist.txt')
 
     parser.add_argument('-n','--ncpu', type= int, default=4, help='number of threads to use, if other processes in your computer '
                         'becomes sluggish/you run into memory error, reduce --nproc')
@@ -128,14 +138,7 @@ def main():
     ssDir= pjoin(modDir, 'slicesdir')
 
 
-    if args.caselist:
-        args.caselist= abspath(args.caselist)
-    else:
-        # use default
-        args.caselist= pjoin(args.outDir, 'log', 'caselist.txt')
-
-
-    cases= read_cases(args.caselist)
+    cases= read_cases(pjoin(args.outDir, 'log', 'caselist.txt'))
     cases.sort()
     
     if args.cut_coords=='enigma':

@@ -14,6 +14,7 @@
 from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit, RAISE
 import numpy as np
 from project_skeleton import project_skeleton
+from conversion import read_cases
 
 
 def _create_skeleton(meanFA, skeleton):
@@ -48,47 +49,44 @@ def _create_skeletonMaskDst(templateMask, skeletonMask, skeletonMaskDst):
                           shell=True)
 
 
-def calc_mean(imgs, shape, qc):
-
-    # computing and saving allFA is a computational overhead
-    # making it optional
-    allFAdata= None
-    if qc:
-        allFAdata= np.zeros((len(imgs), shape[0], shape[1], shape[2]), dtype= 'float32')
-    cumsumFA= np.zeros(shape, dtype= 'float32')
-
+def calc_mean(imgs, shape):
     
+    cumsumFA= np.zeros(shape, dtype= 'float32')
+    consecutiveFA= np.inf*np.ones((2,shape[0],shape[1],shape[2]))
     for i, imgPath in enumerate(imgs):
         data= load(imgPath).get_data().clip(min= 0.)
         cumsumFA+= data
-        if qc:
-            allFAdata[i,: ]= data
+        
+        consecutiveFA[0,: ]= data
+        dynminFA= consecutiveFA.min(axis=0)
+        consecutiveFA[1,: ]= dynminFA
 
-    return (allFAdata, cumsumFA)
+    return (cumsumFA, dynminFA)
 
 
-def skeletonize(imgs, cases, args, skelDir, miFile):
+def skeletonize(imgs, args, warpDir, skelDir, miFile):
 
     target= load(args.template)
-    targetData= target.get_data()
-    X,Y,Z= targetData.shape[0], targetData.shape[1], targetData.shape[2]
+    L= len(imgs)
+    X,Y,Z= tuple(target.header['dim'][1:4])
 
-    # provide the user with allFA sequence so he knows which volume he is looking at while scrolling through allFA
-    seqFile = pjoin(args.statsDir, f'all_{args.modality}_sequence.txt')
-    with open(seqFile, 'w') as f:
-        f.write('index,caseid\n')
-        for i, c in enumerate(cases):
-            f.write(f'{i},{c}\n')
-
-    
+    # this is the given caselist, unsorted
+    cases = read_cases(args.caselist)
+   
     print(f'Calculating mean {args.modality} over all the cases ...')
-    allFAdata, cumsumFA= calc_mean(imgs, (X,Y,Z), args.qc)
+    cumsumFA, dynminFA= calc_mean(imgs, (X,Y,Z))
 
     if args.qc:
+        # computing and saving allFA is a computational overhead
+        # made it optional with --qc flag
+        allFAdata= np.zeros((L,X,Y,Z), dtype= 'float32')
+        for i, c in enumerate(cases):
+            allFAdata[i,: ]= load(pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')).get_data()
+
         allFA= pjoin(args.statsDir, f'all_{args.modality}.nii.gz')
         save_nifti(allFA, np.moveaxis(allFAdata, 0, -1), target.affine, target.header)
 
-        print(f'''\n\nQC the warped {args.modality} images: {allFA}, view {seqFile} for index of volumes in all_FA.nii.gz. 
+        print(f'''\n\nQC the warped {args.modality} images: {allFA}, view {args.caselist} for index of volumes in all_FA.nii.gz. 
 You may use fsleyes/fslview to load {allFA}.
 
 MI metric b/w the warped images and target are stored in {miFile}
@@ -124,7 +122,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         while input('Press Enter when you are done with QC/re-registration: '):
             pass
 
-        allFAdata, cumsumFA= calc_mean(imgs, targetData.shape, args.qc)
+        cumsumFA, dynminFA= calc_mean(imgs, (X,Y,Z))
 
 
     meanFAdata = cumsumFA/len(imgs)
@@ -144,7 +142,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         if not args.templateMask:
             print('Creating template mask ...')
             args.templateMask= pjoin(args.statsDir, 'mean_FA_mask.nii.gz')
-            meanFAmaskData = (meanFAdata > 0) * 1
+            meanFAmaskData = (dynminFA > 0) * 1
             save_nifti(args.templateMask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
         else:
@@ -209,7 +207,8 @@ Note: Replace all the above directories with absolute paths.\n\n''')
 
     # projecting all {modality} data onto skeleton
     pool= Pool(args.ncpu)
-    for c, imgPath in zip(cases, imgs):
+    for c in cases:
+            imgPath= pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')
             pool.apply_async(project_skeleton, (c, imgPath, args, skelDir), error_callback= RAISE)
             
     pool.close()
@@ -222,12 +221,12 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         print('Creating ', allFAskeletonized)
 
         # this loop has been moved out of multiprocessing block to prevent memroy error
-        allFAskeletonizedData= np.zeros((len(imgs), X, Y, Z), dtype= 'float32')
+        allFAskeletonizedData= np.zeros((L, X, Y, Z), dtype= 'float32')
         for i,c in enumerate(cases):
             allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_data()
 
         save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
-        print(f'Created {allFAskeletonized} and corresponding index file: {seqFile}')
+        print(f'Created {allFAskeletonized} sequenced according to {args.caselist}')
 
 
     return args
