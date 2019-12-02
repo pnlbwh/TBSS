@@ -213,7 +213,7 @@ def process(args):
 
 
     # obtain modified args from skeletonize() which will be used for other modalities than FA
-    args= skeletonize(modImgsInTarget, cases, args, skelDir, miFile)
+    args= skeletonize(modImgsInTarget, args, warpDir, skelDir, miFile)
 
     skelImgsInSub= glob(pjoin(skelDir, f'*_{args.modality}_to_target_skel.nii.gz'))
     skelImgsInSub.sort()
