@@ -14,6 +14,9 @@
 from tbssUtil import *
 
 def antsMult(caselist, outPrefix, logDir, N_proc, verbose):
+    
+    if isfile(outPrefix+'template0.nii.gz'):
+        return
 
     if verbose:
         f= sys.stdout

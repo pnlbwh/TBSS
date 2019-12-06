@@ -142,7 +142,8 @@ def process(args):
         antsMult(antsMultCaselist, templateDir, args.logDir, args.ncpu, args.verbose)
         # TODO: rename the template
         args.template= pjoin(templateDir, 'template0.nii.gz')
-        check_call(f'ln -s {args.template} {args.statsDir}', shell= True)
+        if basename(args.template) not in listdir(args.statsDir):
+            heck_call(f'ln -s {args.template} {args.statsDir}', shell= True)
 
         # warp and affine to template0.nii.gz have been created for each case during template construction
         # so template directory should be the transform directory
