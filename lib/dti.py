@@ -12,9 +12,12 @@
 # ===============================================================================
 
 from tbssUtil import *
+from plumbum import FG
+tool= getenv('DTIFIT_TOOL','DIPY')
+cost_func= getenv('COST_FUNC','LS')
 
-def dti(imgPath, maskPath, inPrefix, outPrefix, tool= 'DIPY', cost_func='LS'):
-
+def dti(imgPath, maskPath, inPrefix, outPrefix):
+       
     vol = load(imgPath)
 
     if tool=='DIPY':
@@ -42,7 +45,7 @@ def dti(imgPath, maskPath, inPrefix, outPrefix, tool= 'DIPY', cost_func='LS'):
         print('FSL dtifit ', imgPath)
 
         if cost_func=='WLS':
-            dtifit['-k', imgPath,
+            fslDti['-k', imgPath,
                    '-m', maskPath,
                    '-r', inPrefix + '.bvec',
                    '-b', inPrefix + '.bval',
@@ -51,7 +54,7 @@ def dti(imgPath, maskPath, inPrefix, outPrefix, tool= 'DIPY', cost_func='LS'):
             ] & FG
 
         else:
-            dtifit['-k', imgPath,
+            fslDti['-k', imgPath,
                    '-m', maskPath,
                    '-r', inPrefix + '.bvec',
                    '-b', inPrefix + '.bval',
