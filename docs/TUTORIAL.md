@@ -980,7 +980,10 @@ omit that part with `--noHtml` flag.
 use `--force` flag or delete [transform/template](#ii-transformtemplate) directory manually. This bypassing would be useful for 
 quick re-run after adjusting few parameters such as `args.SKEL_THRESH`. For adjustments to take effect, 
 you should run FA TBSS first which will update the parameters in log directory from where 
-they propagate to subsequent non FA TBSS (altogether or separate).
+they propagate to subsequent non FA TBSS (altogether or separate). 
+
+For `--study` branch, note that `template/template0.nii.gz` file may be created even if template creation fails midway. 
+So, before trying again, make sure to delete that or use `--force` flag. 
 
     
 # Reference
