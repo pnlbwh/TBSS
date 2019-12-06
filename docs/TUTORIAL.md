@@ -364,6 +364,10 @@ transform files are stored in [transform/template](#ii-transformtemplate) direct
 The warp and affine are used to warp `caseid_FA.nii.gz` to template space: `caseid_FA_to_target.nii.gz`. The warped images 
 are saved in [warped](#c-warped) directory. Same warp and affine are used to warp non-FA images.
 
+**NOTE** If you re-run a study and provided that registration files exist, they will not be re-created. To re-create them, 
+use `--force` flag or delete [transform/template](#ii-transformtemplate) directory manually. This bypassing would be useful for 
+quick re-run after adjusting few parameters such as `args.SKEL_THRESH`.
+
 
 ## Step-3: Skeleton creation
 
@@ -505,8 +509,17 @@ In addition, provide the `--generate` flag.
     ...
 
 
-Then, FA, MD, AD, RD are created using either DIPY/FSL diffusion tensor models. Then, TBSS is done for 
-specified `--modality`.
+Then, FA, MD, AD, RD are created using either DIPY/FSL diffusion tensor models. The model and 
+associated cost function can be specified by environment variables `DTIFIT_TOOL` and `COST_FUNC` 
+respectively:
+
+```
+    export DTIFIT_TOOL=FSL # default DIPY
+    export COST_FUNC=WLS   # default LS (least squares/weighted least squares)
+```
+
+Finally, TBSS is done for specified `--modality`.
+
 
 
 ### 2. With diffusivity image list 
@@ -961,6 +974,13 @@ From the order of files listed in `imagelist.csv`, now the program knows `1` is 
 
 (6) If you get any X forwarding error while writing `summary.html` file containing screenshots of axial, lateral, and sagital views,
 omit that part with `--noHtml` flag.
+
+
+(7) If you re-run a study and provided that registration files exist, they will not be re-created. To re-create them, 
+use `--force` flag or delete [transform/template](#ii-transformtemplate) directory manually. This bypassing would be useful for 
+quick re-run after adjusting few parameters such as `args.SKEL_THRESH`. For adjustments to take effect, 
+you should run FA TBSS first which will update the parameters in log directory from where 
+they propagate to subsequent non FA TBSS (altogether or separate).
 
     
 # Reference
