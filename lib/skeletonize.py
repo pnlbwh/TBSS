@@ -11,7 +11,7 @@
 # View LICENSE at https://github.com/pnlbwh/tbss/blob/master/LICENSE
 # ===============================================================================
 
-from tbssUtil import load, save_nifti, pjoin, check_call, environ, basename, Pool, psplit, RAISE
+from tbssUtil import load, save_nifti, pjoin, check_call, basename, Pool, psplit, RAISE
 import numpy as np
 from project_skeleton import project_skeleton
 from conversion import read_cases

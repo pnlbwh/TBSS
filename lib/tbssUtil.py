@@ -12,7 +12,7 @@
 # ===============================================================================
 
 from os.path import abspath, dirname, basename, isdir, isfile, exists, join as pjoin,  split as psplit
-from os import mkdir, remove, listdir, environ, chdir, getcwd, environ
+from os import mkdir, remove, listdir, chdir, getcwd, environ, getenv
 from shutil import rmtree, copyfile, move, copytree
 import unittest
 from subprocess import check_call
