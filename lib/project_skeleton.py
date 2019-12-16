@@ -60,7 +60,7 @@ def project_skeleton(c, imgPath, args, skelDir):
     else:
         
         cmd= (' ').join(['tbss_skeleton',
-                         '-i', imgPath,
+                         '-i', pjoin(args.outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
                          '-p', args.SKEL_THRESH, args.skeletonMaskDst, args.SEARCH_RULE_MASK,
                          pjoin(args.outDir, 'FA', 'warped', f'{c}_FA_to_target.nii.gz'),
                          modImgSkel, '-a', imgPath,
