@@ -247,14 +247,16 @@ https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#branchestemplates
 
 > tudir
 
-**FA only**
+**All modalities together**
+
 ```
 tbss_all \
 -o /tmp/${USER}_enigma/ \
--i FA_maps \
---modality FA \
+-i data/imagelist.csv \
+--modality FA,FAt,FW \
 -c caselist.txt \
---enigma
+--enigma \
+--ncpu 2
 ```
 
 
@@ -348,17 +350,17 @@ fsleyes C001419_FA_to_target.nii.gz P003785_FA_to_target.nii.gz
 > firefox enigma-tbss/FA/slicesdir/summary.html
 
 
-**All modalities together**
-
+**FA only**
 ```
 tbss_all \
 -o /tmp/${USER}_enigma/ \
--i data/imagelist.csv \
---modality FA,FAt,FW \
+-i FA_maps \
+--modality FA \
 -c caselist.txt \
---enigma \
---ncpu 2
+--enigma
 ```
+
+
 
 **Separate nonFA**
 ```
