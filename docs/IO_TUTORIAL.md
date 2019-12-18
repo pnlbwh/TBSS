@@ -32,7 +32,8 @@ Table of Contents
          * [5. Branch name](#5-branch-name)
       * [Examples](#examples)
          * [ENIGMA](#enigma)
-         * [Study template](#study-template)      
+         * [Study template](#study-template)   
+         * [TBSS with DWI image](#tbss-with-dwi-image)   
    * [Status check](#status-check)
    * [Troubleshooting](#troubleshooting)
 
@@ -390,6 +391,19 @@ ls template
 \* `template0.nii.gz` is in subject space, not in any standard space, provide `-s SPACE` to bring to a standard space
 
 \* ROI based analysis is not done by default, provide `-s SPACE --lut LUT --labelMap LABELMAP`
+
+
+### TBSS with DWI image
+
+https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#1-with-dwimask-image-list
+
+```
+-i INPUT.csv    # a txt/csv file with dwi,mask pair in each line
+--generate      # FA,MD,AD,RD diffusion measures are created
+--modality FA   # but you get a choice to run TBSS on one (or few) of the modalities
+-c caselist.txt
+--enigma
+```
 
 
 ## Status check
