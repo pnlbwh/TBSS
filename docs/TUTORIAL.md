@@ -428,14 +428,12 @@ FSL provided templates are used with this argument:
     
     args.template= pjoin(fslDataDir, 'standard', 'FMRIB58_FA_1mm.nii.gz')
     args.skeleton= pjoin(fslDataDir, 'standard', 'FMRIB58_FA-skeleton_1mm.nii.gz')
-
-However, [FreeSurferColorLUT.txt](https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT) is used in this branch.
-    
+ 
 On the other hand, this branch does not do ROI based analysis by default. If wanted, the 
-user should specify an atlas and corresponding space (if atlas and templates are in different space) 
+user should specify an atlas, corresponding space (if atlas and templates are in different space), and look-up-table
 as follows:
 
-    --labelMap atlas.nii.gz --space MNI.nii.gz
+    --labelMap atlas.nii.gz -lut my_look_up_table.txt --space MNI.nii.gz
     
 
 Unlike [original TBSS](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide) approach, we use the [ENIGMA](http://enigma.ini.usc.edu/wp-content/uploads/DTI_Protocols/ENIGMA_ROI_protocol_USC.pdf) approach 
@@ -667,7 +665,8 @@ Moreover, same directory is used to store transform files if a template is furth
 ### iii. log
 
 ANTs registration logs are stored in this directory for each case starting with a caseid. However, the user can print 
-all the outputs to `stdout` by `--verbose` option.
+all the outputs to `stdout` by `--verbose` option. In addition, all commands ran before along with when it was run, 
+are stored in `log/commands.txt` file.
 
 
 ### iv. stats
