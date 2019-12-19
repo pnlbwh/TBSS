@@ -54,7 +54,7 @@ https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#overview
 
 \* fmrib
 
-\* study
+\* studyTemplate
 
 \* user
 
@@ -102,7 +102,7 @@ tbss_all --help
 --modality MODALITY
 -c CASELIST
 -o OUTDIR
---enigma or --fmrib or --study or yourOwnTemplates
+--enigma or --fmrib or --studyTemplate or yourOwnTemplates
 --ncpu 16 # default is 4, using just bsub will not help unless you specify --ncpu
 ```
 
@@ -380,7 +380,7 @@ tbss_all \
 -i data/imagelist.csv \
 --modality FA,FAt,FW \
 -c caselist.txt \
---study \
+--studyTemplate \
 --ncpu 2
 ```
 
