@@ -261,7 +261,7 @@ However, if you want to run nonFA TBSS at a future date based on FA template/reg
     $libDir/tbss_all -i AD/origdata \
     --xfrmDir $testDir/studyTemplateOutput/template \
     --modality AD \
-    --study                                             # --study tells to use previous templates from studyTemplateOutput/stats/*
+    --studyTemplate                                     # --studyTemplate tells to use previous templates from studyTemplateOutput/stats/*
 
 
 A few other arguments are obtained by parsing previous command stored in `*TemplateOutput/log/commands.txt` file. In a nut-shell,
@@ -743,7 +743,7 @@ Here are a few sample commands for running separate nonFA TBSS:
     $libDir/tbss_all -i AD/origdata \
     --xfrmDir $testDir/studyTemplateOutput/template \
     --modality AD \
-    --study                                             # --study tells to use previously created templates from studyTemplateOutput/stats/*
+    --studyTemplate                                     # --studyTemplate tells to use previously created templates from studyTemplateOutput/stats/*
 
 
 # List creation
