@@ -254,7 +254,7 @@ Let's come back to the tutorial directory:
 
 > tudir
 
-* **All modalities together**
+  * **All modalities together**
 
 ```
 tbss_all \
@@ -266,7 +266,7 @@ tbss_all \
 --ncpu 2
 ```
 
-* **FA only**
+  * **FA only**
 ```
 tbss_all \
 -o /tmp/${USER}_enigma/ \
@@ -278,7 +278,7 @@ tbss_all \
 
 
 
-* **Separate nonFA**
+  * **Separate nonFA**
 ```
 tbss_all \
 -i FW_maps \
