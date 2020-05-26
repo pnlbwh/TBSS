@@ -861,6 +861,21 @@ folder are the ones after filling holes, NOT the ones you provide. If you don't 
 use `--noFillHole` flag.
 
 
+# Resource profile
+
+TBD
+
+|                  | Time <Br> (minutes) | RAM <Br> (GB) |
+|------------------|----|-----|
+| antsRegistration | 15 | 1.5 |
+| tbss_skeleton    | 3  | 0.5 |
+
+![](antsUsage.PNG)
+
+---
+
+![](skeletonUsage.PNG)
+
 # Multi threading
 
 Processing can be multi-threaded over the cases. Besides, `antsMultivariateTemplateConstruction2.sh` utilizes 
