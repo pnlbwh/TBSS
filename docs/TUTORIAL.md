@@ -955,7 +955,7 @@ This incompatibility was frequently overserved with FreeWater and FreeWaterCorre
 
 
 (iii) If number of cases/images anomaly exists in other directories, check if your `antsApplyTransforms` and `tbss_skeleton` 
-executables are functining properly. 
+executables are functioning properly. 
 
 
 (4) See the `outDir/log/commands.txt` file for history of commands you tried. If you eventually fail to sort out your problems, 
@@ -1003,7 +1003,7 @@ From the order of files listed in `imagelist.csv`, now the program knows `1` is 
 
 
 (6) If you get any X forwarding error while writing `summary.html` file containing screenshots of axial, lateral, and sagital views,
-omit that part with `--noHtml` flag.
+omit this functionality with `--noHtml` flag.
 
 
 (7) If you re-run a study and provided that registration files exist, they will not be re-created. To re-create them, 
