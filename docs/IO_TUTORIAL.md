@@ -209,7 +209,7 @@ done
 
 ```
 FA          # FA is case-sensitive
-FA,MD,AD,RD # for multi-modalities, FA must be first
+FA,MD,AD,RD # for multi-modalities, FA must be the first modality
 FW,FAt      # FA was run before
 ```
 
@@ -446,6 +446,4 @@ With adjusted parameters, registration will be bypassed, log will be re-written
 (iv) `--ncpu`, reduce it
 
 (v) `--noAllSkeleton`
-
-
 
