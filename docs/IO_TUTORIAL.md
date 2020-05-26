@@ -26,15 +26,18 @@ Table of Contents
             * [just FA](#just-fa)
             * [separate nonFA or future nonFA](#separate-nonfa-or-future-nonfa)
             * [Imagelist creation](#imagelist-creation)
+               * [one modality](#one-modality)
+               * [multiple modalities](#multiple-modalities)
          * [2. --modality MODALITY](#2---modality-modality)
          * [3. -C CASELIST](#3--c-caselist)
          * [4. -o OUTDIR](#4--o-outdir)
          * [5. Branch name](#5-branch-name)
+      * [Resource profile](#resource-profile)
       * [Examples](#examples)
-         * [ENIGMA](#enigma)
-         * [Study template](#study-template)   
-         * [TBSS with DWI image](#tbss-with-dwi-image)   
-   * [Status check](#status-check)
+         * [1. ENIGMA](#1-enigma)
+         * [2. Study template](#2-study-template)
+         * [3. TBSS with DWI image](#3-tbss-with-dwi-image)
+      * [Status check](#status-check)
    * [Troubleshooting](#troubleshooting)
 
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
@@ -42,36 +45,34 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 
 # What is PNL TBSS
 
-* Combines and automates various steps
-
-https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#overview
+* Combines and automates [various steps](https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#overview)
 
 * Gives user flexibility in terms of naming/organizing input data
 
-* Consists of various branches https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#branchestemplates
+* Consists of [various branches](https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#branchestemplates)
 
-\* enigma
+    * enigma
 
-\* fmrib
+    * fmrib
 
-\* studyTemplate
+    * studyTemplate
 
-\* user
+    * user
 
 * Produce structured outputs
 
 
 # Bash setup
 
-* Log in to `grx03.research.partners.org` using NoMachine
+* Log in to `grx{04,05,06}.research.partners.org` using NoMachine
 * Open a basic terminal
 > mv ~/.bashrc ~/.bashrc.bak
 
 * Set up environment
 
-\* FSl>=5.0.11
+    * FSl>=5.0.11
 
-\* Python>=3.6
+    * Python>=3.6
 
 > source /data/pnl/soft/pnlpipe3/bashrc3
 
@@ -106,38 +107,40 @@ tbss_all --help
 --ncpu 16 # default is 4, using just bsub will not help unless you specify --ncpu
 ```
 
-**NOTE** See [nonFA](https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#3-nonfa-tbss) examples to know what few arguments are required for nonFA.
+**NOTE** See [nonFA](https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#3-nonfa-tbss) examples to know about what few arguments are required for nonFA TBSS.
 
 ### 1. -i INPUT
 
 
 #### all modalities together
 
-(i)
+(i) directory as input
 ```
--i FA_maps,FAt_maps,FW_maps # 3 directories corresponding to 3 modalities, first column/modality FA
+-i FA_maps,FAt_maps,FW_maps # 3 directories corresponding to 3 modalities, first directory is of FA images
 --modality FA,FAt,FW        # first modality FA is case-sensitive, rest can be any
 ```
 
-(ii)
+(ii) image list as input
+
 Useful when you have your diffusion measures in different directories. You do not need to copy them 
 to one directory i.e. FA_maps. Thus you can prevent data duplication, save some space, and yet 
 run TBSS gracefully.
 
 ```
--i data/imagelist.csv # 3 columns corresponding to 3 modalities, first column/modality FA
+-i data/imagelist.csv # 3 columns corresponding to 3 modalities, first column is of FA images
 --modality FA,FAt,FW  # first modality FA is case-sensitive, rest can be any 
 ```
 
 #### just FA
 
-(i)
+(i) directory as input
 ```
 -i FA_maps
 --modality FA # first modality FA is case-sensitive
 ```
 
-(ii)
+(ii) image list as input
+
 Useful when you have your diffusion measures in different directories. You do not need to copy them 
 to one directory i.e. `FA_maps`. Thus you can prevent data duplication, save some space, and yet 
 run TBSS gracefully.
@@ -148,8 +151,9 @@ run TBSS gracefully.
 ```
 
 #### separate nonFA or future nonFA
-Upon running FA TBSS, you can run nonFA TBSS separately. This is useful in not requiring you to run 
-non-linear ANTs registration at a later time. Thus, you save time taken in registration, 
+Upon running FA TBSS, you can run nonFA TBSS separately. This feature is useful when you have not decided about all the 
+modalities for which you want to run nonFA TBSS. Moreover, it spares you from requiring to run non-linear 
+ANTs registration again at a later time. Thus, you save time taken in registration, 
 prevent duplication of registration files, and save some space.
 
 ```
@@ -211,7 +215,7 @@ FW,FAt      # FA was run before
 
 * One caseid in each line
 * caseids from caselist is used to find images in input directories and relevant transform files down the pipeline
-* each image file name should have caseid anywhere in its name:
+* each image file name should have caseid somewhere in its name:
 
 ```
 My_caseid_FA.nii.gz
@@ -241,13 +245,16 @@ or
 
 https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#branchestemplates
 
+
 ## Examples
 
-### ENIGMA
+### 1. ENIGMA
+
+Let's come back to the tutorial directory:
 
 > tudir
 
-**All modalities together**
+* **All modalities together**
 
 ```
 tbss_all \
@@ -259,8 +266,34 @@ tbss_all \
 --ncpu 2
 ```
 
+* **FA only**
+```
+tbss_all \
+-o /tmp/${USER}_enigma/ \
+-i FA_maps \
+--modality FA \
+-c caselist.txt \
+--enigma
+```
 
-(i) Visualize outputs:
+
+
+* **Separate nonFA**
+```
+tbss_all \
+-i FW_maps \
+--modality FW \
+--xfrmDir /tmp/${USER}_enigma/transform \
+--enigma \
+--ncpu 2
+```
+
+(i) Resource profile
+
+See [here](TUTORIAL.md#resource-profile)
+
+
+(ii) Inspect outputs:
 
 ```
 tudir
@@ -330,7 +363,7 @@ warped
 Pay attention to `enigma-tbss/log/commands.txt`. This file is used to run nonFA TBSS 
 under the same settings of previous FA TBSS.
 
-(ii) fsleyes visualization
+(iii) fsleyes visualization
 
 * Before registration data are not aligned
 ```
@@ -345,34 +378,13 @@ cd /data/pnl/kcho/tbss_example/enigma-tbss/FA/warped
 fsleyes C001419_FA_to_target.nii.gz P003785_FA_to_target.nii.gz
 ```
 
-(iii) skeleton superimposed on FA
+(iv) skeleton superimposed on FA
 
 > firefox enigma-tbss/FA/slicesdir/summary.html
 
 
-**FA only**
-```
-tbss_all \
--o /tmp/${USER}_enigma/ \
--i FA_maps \
---modality FA \
--c caselist.txt \
---enigma
-```
 
-
-
-**Separate nonFA**
-```
-tbss_all \
--i FW_maps \
---modality FW \
---xfrmDir /tmp/${USER}_enigma/transform \
---enigma \
---ncpu 2
-```
-
-### Study template
+### 2. Study template
 
 ```
 tbss_all \
@@ -390,12 +402,12 @@ cd study-tbss/
 ls template
 ```
 
-\* `template0.nii.gz` is in subject space, not in any standard space, provide `-s SPACE` to bring to a standard space
+* `template0.nii.gz` is in subject space, not in any standard space, provide `-s SPACE` to bring to a standard space
 
-\* ROI based analysis is not done by default, provide `-s SPACE --lut LUT --labelMap LABELMAP`
+* ROI based analysis is not done by default, provide `-s SPACE --lut LUT --labelMap LABELMAP`
 
 
-### TBSS with DWI image
+### 3. TBSS with DWI image
 
 https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#1-with-dwimask-image-list
 
@@ -426,14 +438,14 @@ https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#troubleshooting
 
 And retry ...
 
-(iii) Re-run on previous registration files, useful when adjusting one parameter i.e. `SKEL_THRESH`.
+(ii) Re-run on previous registration files, useful when adjusting one parameter i.e. `SKEL_THRESH`.
 With adjusted parameters, registration will be bypassed, log will be re-written
 
-(ii) `--noHtml`
+(iii) `--noHtml`
 
-(iii) `--ncpu`, reduce it
+(iv) `--ncpu`, reduce it
 
-(iv) `--noAllSkeleton`
+(v) `--noAllSkeleton`
 
 
 
