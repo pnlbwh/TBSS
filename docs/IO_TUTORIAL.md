@@ -26,13 +26,13 @@ Table of Contents
          * [3. -C CASELIST](#3--c-caselist)
          * [4. -o OUTDIR](#4--o-outdir)
          * [5. Branch name](#5-branch-name)
-      * [Resource profile](#resource-profile)
       * [Examples](#examples)
          * [1. ENIGMA](#1-enigma)
          * [2. Study template](#2-study-template)
          * [3. TBSS with DWI image](#3-tbss-with-dwi-image)
       * [Status check](#status-check)
    * [Troubleshooting](#troubleshooting)
+   * [Outlier analysis](#outlier-analysis)
 
 Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -46,11 +46,8 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 * Consists of [various branches](https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#branchestemplates)
 
     * enigma
-
     * fmrib
-
     * studyTemplate
-
     * user
 
 * Produce structured outputs
@@ -66,7 +63,6 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 * Set up environment
 
     * FSl>=5.0.11
-
     * Python>=3.6
 
 > source /data/pnl/soft/pnlpipe3/bashrc3
@@ -153,6 +149,7 @@ run TBSS gracefully.
 ```
 
 #### separate nonFA or future nonFA
+
 Upon running FA TBSS, you can run nonFA TBSS separately. This feature is useful when you have not decided about all the 
 modalities for which you want to run nonFA TBSS. Moreover, it spares you from requiring to run non-linear 
 ANTs registration again at a later time. Thus, you save time taken in registration, 
@@ -446,4 +443,11 @@ With adjusted parameters, registration will be bypassed, log will be re-written
 (iv) `--ncpu`, reduce it
 
 (v) `--noAllSkeleton`
+
+
+# Outlier analysis
+
+https://github.com/pnlbwh/freesurfer-analysis
+
+scripts\generate-summary.py -i path\to\stats\FA_combined_roi_avg.csv -o \tmp\fs-stats\
 
