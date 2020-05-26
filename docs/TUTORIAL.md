@@ -863,18 +863,26 @@ use `--noFillHole` flag.
 
 # Resource profile
 
-TBD
+SyN registration by ANTs and skeletonization by FSL are two resource intensive procedures 
+in TBSS pipeline. The profile of a single-threaded ANTs registration and tbss_skeleton is 
+given below (notice the RES column):
 
-|                  | Time <Br> (minutes) | RAM <Br> (GB) |
-|------------------|----|-----|
-| antsRegistration | 15 | 1.5 |
-| tbss_skeleton    | 3  | 0.5 |
+|                          | Time <Br> (minutes) | RAM <Br> (GB) |
+|--------------------------|----|-----|
+| `antsRegistrationSyNQuick` | 15 | 1.5 |
+| `tbss_skeleton`            | 3  | 0.5 |
 
 ![](antsUsage.PNG)
 
 ---
 
 ![](skeletonUsage.PNG)
+
+It can be inferred from the above profile that each case is processed in less than 20 minutes 
+consuming less than 1.5 GB of RAM. Of course the actual duration and memory usage would depend 
+on the spatial resolutions of the fixed and moving images-- the higher the more.
+
+
 
 # Multi threading
 
@@ -886,6 +894,13 @@ multiple threads to speed-up template construction.
 However, multi-threading comes with a price of slowing down other processes that may be running in your system. So, it 
 is advisable to leave out at least two cores for other processes to run smoothly.
 
+
+You can check the number of available CPUs using `lscpu` and available RAM using `vmstat -s -S M` command. 
+Then, use a good number of processors permitted by the total RAM such that 
+each processor can be allocated 1.5 GB of RAM.
+
+For example, if your machine has 16 CPUs and 16 GB RAM, you should use `--ncpu 8` which should supposedly 
+keep RAM usage limited to 12 GB leaving some room for other processes of the machine to continue running.
 
 
 # NRRD support
