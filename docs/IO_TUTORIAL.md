@@ -447,7 +447,12 @@ With adjusted parameters, registration will be bypassed, log will be re-written
 
 # Outlier analysis
 
-https://github.com/pnlbwh/freesurfer-analysis
+* See details at https://github.com/pnlbwh/freesurfer-analysis
 
-scripts\generate-summary.py -i path\to\stats\FA_combined_roi_avg.csv -o \tmp\fs-stats\
+* Analyze statistics
+> /data/pnl/soft/pnlpipe3/freesurfer-analysis/scripts/generate-summary.py -i path/to/stats/FA_combined_roi_avg.csv 
+-o /tmp/tbss-FA-stats/
+
+* View outlier summary
+> firefox http://localhost:8050/
 
