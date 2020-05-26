@@ -22,12 +22,6 @@ Table of Contents
    * [Running TBSS](#running-tbss)
       * [Mandatory inputs](#mandatory-inputs)
          * [1. -i INPUT](#1--i-input)
-            * [all modalities together](#all-modalities-together)
-            * [just FA](#just-fa)
-            * [separate nonFA or future nonFA](#separate-nonfa-or-future-nonfa)
-            * [Imagelist creation](#imagelist-creation)
-               * [one modality](#one-modality)
-               * [multiple modalities](#multiple-modalities)
          * [2. --modality MODALITY](#2---modality-modality)
          * [3. -C CASELIST](#3--c-caselist)
          * [4. -o OUTDIR](#4--o-outdir)
@@ -65,6 +59,7 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 # Bash setup
 
 * Log in to `grx{04,05,06}.research.partners.org` using NoMachine
+
 * Open a basic terminal
 > mv ~/.bashrc ~/.bashrc.bak
 
@@ -111,6 +106,13 @@ tbss_all --help
 
 ### 1. -i INPUT
 
+* [all modalities together](#all-modalities-together)
+* [just FA](#just-fa)
+* [separate nonFA or future nonFA](#separate-nonfa-or-future-nonfa)
+* [Imagelist creation](#imagelist-creation)
+   * [one modality](#one-modality)
+   * [multiple modalities](#multiple-modalities)
+   
 
 #### all modalities together
 
@@ -275,8 +277,6 @@ tbss_all \
 -c caselist.txt \
 --enigma
 ```
-
-
 
 * Separate nonFA
 ```
