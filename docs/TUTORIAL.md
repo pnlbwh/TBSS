@@ -64,6 +64,7 @@ Table of Contents
       * [2. Voxelwise analysis](#2-voxelwise-analysis)
    * [QC](#qc)
    * [Fill holes](#fill-holes)
+   * [Resource profile](#resource-profile)
    * [Multi threading](#multi-threading)
    * [NRRD support](#nrrd-support)
    * [Troubleshooting](#troubleshooting)
