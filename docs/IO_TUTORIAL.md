@@ -55,6 +55,8 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 
 # Bash setup
 
+To be able to try the tutorial hands-on, we need you to setup your terminal first.
+
 * Log in to `grx{04,05,06}.research.partners.org` using NoMachine
 
 * Open a basic terminal
@@ -183,6 +185,8 @@ prevent duplication of registration files, and save some space.
 
 #### Imagelist creation
 
+Let's try to create a few lists from the `tudir`:
+
 > tree data/C001419
 ```
 data/C001419
@@ -193,14 +197,18 @@ data/C001419
 
 ##### one modality
 
-> ls `pwd`/???????/*_FW.nii.gz > /tmp/${USER}_fw_list.csv
+> ls \`pwd\`/???????/*_FW.nii.gz > /tmp/${USER}_fw_list.csv
 
 ##### multiple modalities
 
 ```bash
+cd data
+rm /tmp/${USER}_imagelist.csv
+
 for caseid in `ls -d ???????`;
 do
-    echo `pwd`/${caseid}/${caseid}_TensorDTINoNeg_decomp_FA.nii.gz,`pwd`/${caseid}/${caseid}_TensorDTI_FWCorrected_decomp_FAt.nii.gz,`pwd`/${caseid}/${caseid}_FW.nii.gz >> /tmp/$USER_imagelist.csv;
+    caseid=${caseid%/};
+    echo `pwd`/${caseid}/${caseid}_TensorDTINoNeg_decomp_FA.nii.gz,`pwd`/${caseid}/${caseid}_TensorDTI_FWCorrected_decomp_FAt.nii.gz,`pwd`/${caseid}/${caseid}_FW.nii.gz >> /tmp/${USER}_imagelist.csv;
 done
 ```
 
@@ -214,9 +222,9 @@ FW,FAt      # FA was run before
 
 ### 3. -C CASELIST
 
-* One caseid in each line
+* One `caseid` in each line
 * caseids from caselist is used to find images in input directories and relevant transform files down the pipeline
-* each image file name should have caseid somewhere in its name:
+* each image file name should have `caseid` somewhere in its name:
 
 ```
 My_caseid_FA.nii.gz
@@ -225,14 +233,18 @@ sub-caseid_DTI_Tensor_FA.nii.gz
 ```
 
 ```
-ls -d C00???? >> /tmp/${USER}_caselist.txt
-ls -d P00???? >> /tmp/${USER}_caselist.txt
+cd data
+
+ls -d C00???? | sed 's+/++' > /tmp/${USER}_caselist.txt
+ls -d P00???? | tr -d '/'   >> /tmp/${USER}_caselist.txt
+
+# or using a single regex pattern
+
+ls -d ??????? | tr -d '/'   > /tmp/${USER}_caselist.txt
 ```
 
-or 
-
-> ls -d ??????? > /tmp/${USER}_caselist.txt
-
+**NOTE** `sed` and `tr` are two ways to trim the trailing slash appearing at the end of the `caseid` directory when 
+listed using `ls -d`.
 
 ### 4. -o OUTDIR
 
@@ -289,7 +301,7 @@ tbss_all \
 
 (i) Resource profile
 
-See [here](TUTORIAL.md#resource-profile)
+See [here](TUTORIAL.md#resource-profile) to learn how to plan for `--ncpu` to maximally parallelize your processes. 
 
 
 (ii) Inspect outputs:
@@ -433,19 +445,26 @@ https://github.com/pnlbwh/TBSS/blob/master/docs/TUTORIAL.md#troubleshooting
 
 (i) Made a mistake or program failed
 
-`# rm enigma-tbss/FW`
+Remove the output directory of the modality for which it failed only:
+
+`rm enigma-tbss/FW`
 
 And retry ...
 
-(ii) Re-run on previous registration files, useful when adjusting one parameter i.e. `SKEL_THRESH`.
-With adjusted parameters, registration will be bypassed, log will be re-written
+(ii) Re-run utilizing previous registration files
+
+This feature is useful when you want to adjust a single parameter i.e. `SKEL_THRESH`. 
+With adjusted parameters, TBSS will re-run bypassing registration but re-create all other files.
 
 (iii) `--noHtml`
 
-(iv) `--ncpu`, reduce it
+(iv) `--ncpu`
+
+Reduce it
 
 (v) `--noAllSkeleton`
 
+See [documentation](./TUTORIAL.md) for details about them.
 
 # Outlier analysis
 
