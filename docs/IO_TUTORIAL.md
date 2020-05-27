@@ -67,11 +67,14 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 
 > source /data/pnl/soft/pnlpipe3/bashrc3
 
+* Define the following alias
 
 ```
 cd /data/pnl/kcho/tbss_example
 alias tudir="cd $PWD"
 ```
+
+* Observe the input data
 
 ```
 ls FA_maps
