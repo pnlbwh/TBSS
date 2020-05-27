@@ -1015,6 +1015,38 @@ they propagate to subsequent non FA TBSS (altogether or separate).
 For `--study` branch, note that `template/template0.nii.gz` file may be created even if template creation fails midway. 
 So, before trying again, make sure to delete that or use `--force` flag. 
 
+
+(8) `log/commands.txt` stores all the command you attempt on `--outDir`. When nonFA TBSS is run separately, 
+the latest command is [parsed](https://github.com/pnlbwh/TBSS/blob/21f8bb116fae917d22c7e62a52101da4570bb933/lib/tbss_all#L205) 
+to figure out the following attributes that are same for all modalities:
+
+```python
+for i, entity in enumerate(lastArgs):
+    if entity=='--caselist':
+        args.caselist= lastArgs[i+1]
+    elif entity=='--space':
+        args.space= lastArgs[i+1]
+    elif entity=='--labelMap':
+        args.labelMap= lastArgs[i+1]
+    elif entity=='--lut':
+        args.lut= lastArgs[i+1]
+    elif entity=='--SKEL_THRESH':
+        args.SKEL_THRESH= lastArgs[i+1]
+    elif entity=='--SEARCH_RULE_MASK':
+        args.SEARCH_RULE_MASK= lastArgs[i+1]
+    elif entity=='--avg':
+        args.avg= True
+    elif entity=='--noFillHole':
+        args.noFillHole= True
+    elif entity=='--noAllSkeleton':
+        args.noAllSkeleton= True
+    elif entity=='--noHtml':
+        args.noHtml= True
+```
+
+If you have made a 'blatant' mistake in your attempt of nonFA TBSS, it might be useful to delete the last line 
+from `log/commands.txt` lest that line should become the reference command for future nonFA TBSS.
+ 
     
 # Reference
 
@@ -1030,3 +1062,5 @@ Frontiers in Neuroinformatics, vol. 8, p. 8, Frontiers, 2014.
 
 Billah, Tashrif; Bouix, Sylvain, Rathi, Yogesh; Various MRI Conversion Tools, 
 https://github.com/pnlbwh/conversion, 2019, DOI: 10.5281/zenodo.2584003.
+
+
