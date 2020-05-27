@@ -72,6 +72,7 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
 ```
 cd /data/pnl/kcho/tbss_example
 alias tudir="cd $PWD"
+alias tbss_all=/data/pnl/soft/pnlpipe3/tbss/lib/tbss_all
 ```
 
 * Observe the input data
@@ -85,10 +86,8 @@ ls data/*
 
 # Running TBSS
 
-```
-alias tbss_all=/data/pnl/soft/pnlpipe3/tbss/lib/tbss_all
-tbss_all --help
-```
+> tbss_all --help
+
 
 ## Mandatory inputs
 
