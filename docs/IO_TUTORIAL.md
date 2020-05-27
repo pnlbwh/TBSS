@@ -193,7 +193,7 @@ data/C001419
 
 ##### one modality
 
-> ls `pwd`/???????/_FW.nii.gz > /tmp/${USER}_fw_list.csv
+> ls `pwd`/???????/*_FW.nii.gz > /tmp/${USER}_fw_list.csv
 
 ##### multiple modalities
 
