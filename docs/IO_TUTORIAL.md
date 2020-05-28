@@ -471,8 +471,10 @@ See [documentation](./TUTORIAL.md) for details about them.
 * See details at https://github.com/pnlbwh/freesurfer-analysis
 
 * Analyze statistics
-> /data/pnl/soft/pnlpipe3/freesurfer-analysis/scripts/generate-summary.py -i path/to/stats/FA_combined_roi_avg.csv 
--o /tmp/tbss-FA-stats/
+```
+tudir
+/data/pnl/soft/pnlpipe3/freesurfer-analysis/scripts/generate-summary.py -i enigma-tbss/stats/FA_combined_roi_avg.csv -o /tmp/FA-outliers/
+```
 
 * View outlier summary
 > firefox http://localhost:8050/
