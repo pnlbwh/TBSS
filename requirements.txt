@@ -7,4 +7,5 @@ plumbum
 pandas
 pynrrd
 pytest
+matplotlib
 git+https://github.com/pnlbwh/conversion.git
