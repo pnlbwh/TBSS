@@ -217,7 +217,7 @@ echo Testing partial --enigma branch ...
 pushd .
 cd $testDir/enigmaTemplateOutput
 $libDir/tbss_all -i MD/origdata,RD/origdata \
---xfrmDir $testDir/enigmaTemplateOutput/transform \
+-o $testDir/enigmaTemplateOutput/ \
 --modality MD,RD --noFillHole \
 --enigma && echo Partial --enigma branch execution successful \
 || echo Partial --enigma branch execution FAILED
@@ -230,7 +230,7 @@ echo Testing partial --studyTemplate branch ...
 pushd .
 cd $testDir/enigmaTemplateOutput/
 $libDir/tbss_all -i AD/origdata,RD/origdata \
---xfrmDir $testDir/studyTemplateOutput/template \
+-o $testDir/studyTemplateOutput/ \
 --modality AD,RD --noFillHole \
 --study && echo Partial --studyTemplate branch execution successful \
 || echo Partial --studyTemplate branch execution FAILED
