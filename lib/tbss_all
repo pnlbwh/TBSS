@@ -72,9 +72,9 @@ TBSS will be done for FA first, and then for other modalities.
 
 (iv) separate nonFA TBSS:
 if you wish to run TBSS for other modalities in future, files created during FA TBSS will be 
-integrated into the nonFA TBSS. Provide --xfrmDir where transform files are located. All other directories will be 
-realized relative to --xfrmDir. On the other hand, specification of 
---input and --modality are same as above.""")
+integrated into the nonFA TBSS. Provide the same --outDir as that of FA TBSS. All other directories will be 
+realized relative to --outDir. On the other hand, provide --input and --modality in the same way 
+as you would provide for FA TBSS.""")
 
     parser.add_argument('--generate', action='store_true',
                         help='generate diffusion measures for dwi1,mask1\\n... list')
@@ -82,8 +82,9 @@ realized relative to --xfrmDir. On the other hand, specification of
     parser.add_argument('-c', '--caselist', type=str,
                         help='caselist.txt where each line is a subject ID')
 
-    parser.add_argument('-o', '--outDir', type=str,
-                        help='where all outputs are saved in an organized manner')
+    parser.add_argument('-o', '--outDir', type=str, required=True,
+                        help='where all outputs are saved in an organized manner, '
+                             'for separate/future nonFA TBSS--it must be the same as that of previous FA TBSS')
 
     parser.add_argument('--studyTemplate', action='store_true',
                         help='create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst')
@@ -142,9 +143,6 @@ realized relative to --xfrmDir. On the other hand, specification of
     parser.add_argument('--status', action='store_true',
                         help='prints progress of TBSS pipeline so far')
 
-    parser.add_argument('--xfrmDir', type=str,
-                        help='provide previously created transform/template directory, used with separate/future nonFA TBSS')
-
     parser.add_argument('--noFillHole', action='store_true', help='do not fill holes inside the brain in diffusion measure images')
 
     parser.add_argument('--noAllSkeleton', action='store_true', help='do not merge skeletons')
@@ -156,14 +154,9 @@ realized relative to --xfrmDir. On the other hand, specification of
 
     args = parser.parse_args()
 
-    if args.outDir:
-        args.outDir = abspath(args.outDir)
-        # we cannot overwrite outDir, because previous output can be there
-        makeDirectory(args.outDir)
-
-        args.logDir = pjoin(args.outDir, 'log')
-        # we cannot overwrite logDir, because previous commands can be there
-        makeDirectory(args.logDir)
+    args.outDir = abspath(args.outDir)
+    args.xfrmDir = pjoin(args.outDir, 'transform')
+    args.logDir = pjoin(args.outDir, 'log')
 
     if args.status:
         if not args.outDir:
@@ -172,18 +165,30 @@ realized relative to --xfrmDir. On the other hand, specification of
         from progress import show_progress
         show_progress(args.outDir, args.verbose)
         exit()
-
+    
 
     # if modality is not FA, check if 'transform' directory exists
     # warp and affine will be used from this directory to study non FA images
-    if not args.xfrmDir:
-        args.xfrmDir = pjoin(args.outDir, 'transform')
+    modalities = args.modality.split(',')
+    if modalities[0]=='FA':
+        # we cannot overwrite outDir, because previous output can be there
+        makeDirectory(args.outDir)
+
+        # we cannot overwrite logDir, because previous commands can be there
+        makeDirectory(args.logDir)
 
     else:
-        args.xfrmDir = abspath(args.xfrmDir)
+        if 'FA' in modalities:
+            raise ValueError('--modality FA,... must come first')
+        else:
+            try:
+                listdir(args.xfrmDir)
+            except:
+                raise FileNotFoundError(f'{args.xfrmDir}/ containing warps and affines from FA registration does not exist. '
+                                         'Make sure to provide the same -o as that of FA TBSS or run FA TBSS first.')
+        
+        
         warn(f'Running separate nonFA TBSS, with same settings of previous FA TBSS')
-        args.outDir = dirname(args.xfrmDir)
-        args.logDir = pjoin(args.outDir, 'log')
 
         # using previous files, --force is invalid
         args.force = False
@@ -227,8 +232,6 @@ realized relative to --xfrmDir. On the other hand, specification of
 
     if args.ncpu==-1:
         args.ncpu= cpu_count()
-
-    modalities = args.modality.split(',')
 
 
     # check executables ====================================================================================
@@ -408,9 +411,6 @@ realized relative to --xfrmDir. On the other hand, specification of
 
     num_modalities= len(modalities)
 
-
-    if modalities[0]!='FA' and not isdir(args.xfrmDir):
-        raise FileNotFoundError(f'{args.xfrmDir}/ containing Warp and affine from FA registration does not exist')
 
     # log the argument-adjusted given command ==============================================================
     args_string = [abspath(__file__)]

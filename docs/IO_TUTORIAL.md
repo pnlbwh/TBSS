@@ -162,7 +162,7 @@ prevent duplication of registration files, and save some space.
 ```
 -i data/fat_fw_list.csv # 2 columns for FAt and FW
 --modality FAt,FW
---xfmrDir enigma-tbss/transform
+-o enigma-tbss/
 ```
 
 ```
@@ -294,7 +294,7 @@ tbss_all \
 tbss_all \
 -i FW_maps \
 --modality FW \
---xfrmDir /tmp/${USER}_enigma/transform \
+-o /tmp/${USER}_enigma/ \
 --enigma \
 --ncpu 2
 ```

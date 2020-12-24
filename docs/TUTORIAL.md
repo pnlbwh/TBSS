@@ -83,7 +83,6 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
                 [--lut LUT] [--qc] [--avg] [--force] [--verbose] [-n NCPU]
                 [--SKEL_THRESH SKEL_THRESH]
                 [--SEARCH_RULE_MASK SEARCH_RULE_MASK] [--status]
-                [--xfrmDir XFRMDIR]
     
     TBSS at PNL encapsulating different protocols i.e FSL, ENIGMA, ANTs template etc.
     
@@ -126,11 +125,10 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
                         (iv) separate nonFA TBSS: if you wish to
                         run TBSS for other modalities in future, files created
                         during FA TBSS will be integrated into the nonFA TBSS.
-                        Provide --xfrmDir where transform files are located.
-                        All other directories will be realized relative to
-                        --xfrmDir. On the other hand, specification of --input
-                        and --modality are same as above.
-    
+                        Provide the same --outDir as that of FA TBSS.
+                        All other directories will be realized relative to --outDir.
+                        On the other hand, provide --input and --modality in the same way
+                        as you would provide for FA TBSS.
     
     --generate          generate diffusion measures for dwi1,mask1\n... list
     
@@ -138,7 +136,9 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
                         caselist.txt where each line is a subject ID
     
     -o OUTDIR, --outDir OUTDIR
-                        where all outputs are saved in an organized manner
+                        where all outputs are saved in an organized manner,
+                        for separate/future nonFA TBSS--it must be the same as
+                        that of previous FA TBSS where all outputs are saved in an organized manner
     
     --studyTemplate     create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst
     
@@ -201,13 +201,13 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
     
     --status            prints progress of TBSS pipeline so far
     
-    --xfrmDir XFRMDIR   provide previously created transform/template directory, used with separate/future nonFA TBSS 
-    
     --noFillHole        do not fill holes inside the brain in diffusion measure
     
     --noAllSkeleton     do not merge skeletons
     
     --noHtml            do not generate summary.html file containing screenshots of axial, lateral, and sagital views
+
+
 
 # Useful commands
 
@@ -254,15 +254,15 @@ However, if you want to run nonFA TBSS at a future date based on FA template/reg
 **nonFA** `--engima` TBSS
     
     $libDir/tbss_all -i MD/origdata,RD/origdata \
-    --xfrmDir $testDir/enigmaTemplateOutput/transform \ # transform files are obtained from here
-    --modality MD,RD --enigma                           # --enigma tells to use enigma templates
+    -o $testDir/enigmaTemplateOutput/ \ # transform files are obtained from here
+    --modality MD,RD --enigma           # --enigma tells to use enigma templates
 
 **nonFA** `--studyTemplate` TBSS
 
     $libDir/tbss_all -i AD/origdata \
-    --xfrmDir $testDir/studyTemplateOutput/template \
+    -o $testDir/studyTemplateOutput/ \
     --modality AD \
-    --studyTemplate                                     # --studyTemplate tells to use previous templates from studyTemplateOutput/stats/*
+    --studyTemplate                     # --studyTemplate tells to use previous templates from studyTemplateOutput/stats/*
 
 
 A few other arguments are obtained by parsing previous command stored in `*TemplateOutput/log/commands.txt` file. In a nut-shell,
@@ -708,21 +708,21 @@ Rest of the modalities should also correspond to rest of the images.
                                 a txt/csv file with Mod1_Img1,Mod2_Img1,...\nMod1_Img2,Mod2_Img2,...\n... ;
                                 TBSS will be done for FA first, and then for other modalities.
     
-
-                                (iv) separate nonFA TBSS: if you wish to 
+                                (iv) separate nonFA TBSS: if you wish to
                                 run TBSS for other modalities in future, files created
                                 during FA TBSS will be integrated into the nonFA TBSS.
-                                Provide --xfrmDir where transform files are located.
-                                All other directories will be realized relative to
-                                --xfrmDir. On the other hand, specification of --input
-                                and --modality are same as above.
+                                Provide the same --outDir as that of FA TBSS.
+                                All other directories will be realized relative to --outDir.
+                                On the other hand, provide --input and --modality in the same way
+                                as you would provide for FA TBSS.
 
 
 However, if you wish to run FA first and then other modalities in future, use option (iv) from above. There, you should 
-provide (by `--xfrmDir`) the directory containing warp/affine obtained during registration of subject FA to the template/standard space. 
+provide the same `--outDir` as that of FA TBSS. The `--outDir` has a `transform` directory containing warp/affine obtained 
+during registration of subject FA to the template/standard space. 
 This way, we bypass doing the same non-linear registration once again. In addition, provide the type/branch name (one of 
 `enigma`, `fmrib`, `study`) of TBSS you want to run. Previous registration files and any templates created during 
-FA TBSS are realized with respect to `--xfrmDir` that you provide. In addition, `log/commands.txt` file from previous 
+FA TBSS are realized with respect to `--outDir` that you provide. Furthermore, `log/commands.txt` file from previous 
 output directory is exploited to figure out arguments provided to FA TBSS before. In a nutshell, nonFA TBSS will run 
 with the same settings of previous FA TBSS. 
 
@@ -733,17 +733,17 @@ Here are a few sample commands for running separate nonFA TBSS:
 **nonFA** `--engima` TBSS
     
     $libDir/tbss_all -i MD/origdata,RD/origdata \
-    --xfrmDir $testDir/enigmaTemplateOutput/transform \ # transform files are obtained from here
-    --modality MD,RD --enigma \                         # --enigma tells to use enigma templates
+    -o $testDir/enigmaTemplateOutput/ \             # transform files are obtained from here
+    --modality MD,RD --enigma                       # --enigma tells to use enigma templates
 
 
 
 **nonFA** `--studyTemplate` TBSS
 
     $libDir/tbss_all -i AD/origdata \
-    --xfrmDir $testDir/studyTemplateOutput/template \
+    -o $testDir/studyTemplateOutput/ \
     --modality AD \
-    --studyTemplate                                     # --studyTemplate tells to use previously created templates from studyTemplateOutput/stats/*
+    --studyTemplate                                 # --studyTemplate tells to use previously created templates from studyTemplateOutput/stats/*
 
 
 # List creation

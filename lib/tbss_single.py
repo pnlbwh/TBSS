@@ -56,7 +56,7 @@ def process(args):
     modDir = pjoin(args.outDir, f'{args.modality}')
     # args.xfrmDir = pjoin(args.outDir, 'transform')
     # args.statsDir = pjoin(args.outDir, 'stats')
-    templateDir = pjoin(args.outDir, 'template/')  # trailing slash is important for antsMultivariate*.sh
+    templateDir = pjoin(args.outDir, 'transform/')  # trailing slash is important for antsMultivariate*.sh
     preprocDir= pjoin(modDir, 'preproc')
     warpDir= pjoin(modDir, 'warped')
     skelDir= pjoin(modDir, 'skeleton')
