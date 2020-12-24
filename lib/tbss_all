@@ -72,9 +72,9 @@ TBSS will be done for FA first, and then for other modalities.
 
 (iv) separate nonFA TBSS:
 if you wish to run TBSS for other modalities in future, files created during FA TBSS will be 
-integrated into the nonFA TBSS. Provide --xfrmDir where transform files are located. All other directories will be 
-realized relative to --xfrmDir. On the other hand, specification of 
---input and --modality are same as above.""")
+integrated into the nonFA TBSS. Provide the same --outDir as that of FA TBSS. All other directories will be 
+realized relative to --outDir. On the other hand, provide --input and --modality in the same way 
+as you would provide for FA TBSS.""")
 
     parser.add_argument('--generate', action='store_true',
                         help='generate diffusion measures for dwi1,mask1\\n... list')
