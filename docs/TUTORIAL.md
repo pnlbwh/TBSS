@@ -138,7 +138,7 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
     -o OUTDIR, --outDir OUTDIR
                         where all outputs are saved in an organized manner,
                         for separate/future nonFA TBSS--it must be the same as
-                        that of previous FA TBSSwhere all outputs are saved in an organized manner
+                        that of previous FA TBSS where all outputs are saved in an organized manner
     
     --studyTemplate     create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst
     
