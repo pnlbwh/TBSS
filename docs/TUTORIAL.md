@@ -9,7 +9,7 @@ If this repository is useful in your research, please cite as below:
 Billah, Tashrif; Bouix, Sylvain; Pasternak, Ofer; Generalized Tract Based Spatial Statistics (TBSS) pipeline,
 https://github.com/pnlbwh/tbss, 2019, DOI: https://doi.org/10.5281/zenodo.2662497
 
-See installation instruction [here](./README.md)
+See installation instruction [here](./README.md).
 
 Table of Contents
 =================
