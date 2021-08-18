@@ -156,7 +156,7 @@ Table of Contents created by [gh-md-toc](https://github.com/ekalinin/github-mark
                         TBSS on non FA images using that template
     
     --templateMask TEMPLATEMASK
-                        mask of the FA template, if not provided, one will becreated
+                        mask of the FA template, if not provided, one will be created
     
     --skeleton SKELETON          
                         skeleton of the FA template, if not provided, one will be created
