@@ -142,7 +142,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         if not args.templateMask:
             print('Creating template mask ...')
             args.templateMask= pjoin(args.statsDir, 'mean_FA_mask.nii.gz')
-            meanFAmaskData = (dynminFA > 0) * 1
+            meanFAmaskData = (meanFAdata > 0) * 1
             save_nifti(args.templateMask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
         else:
