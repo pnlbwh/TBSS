@@ -54,7 +54,7 @@ def calc_mean(imgs, shape):
     cumsumFA= np.zeros(shape, dtype= 'float32')
     consecutiveFA= np.inf*np.ones((2,shape[0],shape[1],shape[2]))
     for i, imgPath in enumerate(imgs):
-        data= load(imgPath).get_data().clip(min= 0.)
+        data= load(imgPath).get_fdata().clip(min= 0.)
         cumsumFA+= data
         
         consecutiveFA[0,: ]= data
@@ -81,7 +81,7 @@ def skeletonize(imgs, args, warpDir, skelDir, miFile):
         # made it optional with --qc flag
         allFAdata= np.zeros((L,X,Y,Z), dtype= 'float32')
         for i, c in enumerate(cases):
-            allFAdata[i,: ]= load(pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')).get_data()
+            allFAdata[i,: ]= load(pjoin(warpDir, f'{c}_{args.modality}_to_target.nii.gz')).get_fdata()
 
         allFA= pjoin(args.statsDir, f'all_{args.modality}.nii.gz')
         save_nifti(allFA, np.moveaxis(allFAdata, 0, -1), target.affine, target.header)
@@ -146,7 +146,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
             save_nifti(args.templateMask, meanFAmaskData.astype('uint8'), target.affine, target.header)
 
         else:
-            meanFAmaskData= load(args.templateMask).get_data()
+            meanFAmaskData= load(args.templateMask).get_fdata()
 
 
         meanFAdata = meanFAdata * meanFAmaskData
@@ -223,7 +223,7 @@ Note: Replace all the above directories with absolute paths.\n\n''')
         # this loop has been moved out of multiprocessing block to prevent memroy error
         allFAskeletonizedData= np.zeros((L, X, Y, Z), dtype= 'float32')
         for i,c in enumerate(cases):
-            allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_data()
+            allFAskeletonizedData[i,: ]= load(pjoin(skelDir, f'{c}_{args.modality}_to_target_skel.nii.gz')).get_fdata()
 
         save_nifti(allFAskeletonized, np.moveaxis(allFAskeletonizedData, 0, -1), target.affine, target.header)
         print(f'Created {allFAskeletonized} sequenced according to {args.caselist}')
