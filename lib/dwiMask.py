@@ -14,7 +14,7 @@ def dwiMask(dwImg, outPrefix, median_radius, num_pass):
 
     # extract the first b0
     ind= np.where(bvals<50)[0][0]
-    _, mask= median_otsu(img.get_data()[...,ind], median_radius, num_pass)
+    _, mask= median_otsu(img.get_fdata()[...,ind], median_radius, num_pass)
 
     save_nifti(outPrefix+'_mask.nii.gz', mask.astype('uint8'), img.affine, img.header)
 

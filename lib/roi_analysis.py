@@ -51,7 +51,7 @@ def average_labels(labels):
 def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDir, avgFlag):
 
     print('Creating ROI based statistics for', imgPath)
-    img= load(imgPath).get_data()
+    img= load(imgPath).get_fdata()
     _imgNonzero= img>0
 
     df= pd.DataFrame(columns= ['Tract','Average','nVoxels'])
@@ -112,7 +112,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
 
 def roi_analysis(imgs, cases, args, roiDir, N_CPU):
 
-    intLabels = load(args.labelMap).get_data()
+    intLabels = load(args.labelMap).get_fdata()
     label2name = parse_labels(np.unique(intLabels)[1:], args.lut)
     commonLabels= average_labels(label2name.values())
 

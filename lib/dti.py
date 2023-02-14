@@ -25,7 +25,7 @@ def dti(imgPath, maskPath, inPrefix, outPrefix):
 
         mask= load(maskPath)
         bvals, bvecs= read_bvals_bvecs(inPrefix + '.bval', inPrefix + '.bvec')
-        masked_vol = applymask(vol.get_data(), mask.get_data())
+        masked_vol = applymask(vol.get_fdata(), mask.get_fdata())
 
         gtab= gradient_table(bvals, bvecs)
         dtimodel= dipyDti.TensorModel(gtab, fit_method= cost_func)
@@ -66,8 +66,8 @@ def dti(imgPath, maskPath, inPrefix, outPrefix):
         copyfile(outPrefix+'_L1.nii.gz', outPrefix+'_AD.nii.gz')
 
         # RD
-        L2= load(outPrefix+'_L2.nii.gz').get_data()
-        L3= load(outPrefix+'_L3.nii.gz').get_data()
+        L2= load(outPrefix+'_L2.nii.gz').get_fdata()
+        L3= load(outPrefix+'_L3.nii.gz').get_fdata()
         rd= (L2+L3)/2.
 
         save_nifti(outPrefix + '_RD.nii.gz', rd, vol.affine, vol.header)
