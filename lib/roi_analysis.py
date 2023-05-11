@@ -51,7 +51,7 @@ def average_labels(labels):
 def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDir, avgFlag,skeletonMaskPeri):
 
     print('Creating ROI based statistics for', imgPath)
-    img= load(imgPath).get_data()
+    img= load(imgPath).get_fdata()
     _imgNonzero= img>0
 
     df= pd.DataFrame(columns= ['Tract','Average','nVoxels'])
@@ -72,7 +72,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         else:
             df.loc[i + 1] = [label2name[intLabel]] + ['0','0']
     
-    roi= load(skeletonMaskPeri).get_data()
+    roi= load(skeletonMaskPeri).get_fdata()
     _roi = np.logical_and(_imgNonzero, roi)
     _img_roi= img[_roi]
     end=len(df)
