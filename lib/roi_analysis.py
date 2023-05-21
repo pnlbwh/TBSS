@@ -150,11 +150,15 @@ def roi_analysis(imgs, cases, args, roiDir, N_CPU):
         df= pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi.csv'))
         core=df
         core=core.drop(core[core['Tract'] =='Peri'].index, inplace = False)
+        core=core.drop(core[core['Tract'] =='AverageFA'].index, inplace = False)
         # num2str() text formatting is for precision control
-        total_vox=sum(df['nVoxels'].values)
-        df['weight']=df['Average'].values*(df['nVoxels'].values/total_vox)
-        weighted_avg=sum(df['weight'].values)
-
+        no_avg=df
+        no_avg=no_avg.drop(no_avg[no_avg['Tract'] =='AverageFA'].index, inplace = False)
+        total_vox=sum(no_avg['nVoxels'].values)
+        no_avg['weight']=no_avg['Average'].values*(no_avg['nVoxels'].values/total_vox)
+        weighted_avg=sum(no_avg['weight'].values)
+        
+        
         total_core=sum(core['nVoxels'].values)
         core['weight']=core['Average'].values*(core['nVoxels'].values/total_core)
         core_weighted_avg=sum(core['weight'].values)
