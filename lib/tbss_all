@@ -90,7 +90,7 @@ as you would provide for FA TBSS.""")
                         help='create all of template, templateMask, skeleton, skeletonMask, and skeletonMaskDst')
 
     parser.add_argument('--enigma', action='store_true',
-                        help='use ENGIMA provided template, templateMask, skeleton, skeletonMask, and skeletonMaskDst, '
+                        help='use ENGIMA provided template, templateMask, skeleton, skeletonMask, perimask and skeletonMaskDst, '
                              'do JHU white matter atlas based ROI analysis using ENIGMA look up table')
 
     parser.add_argument('--fmrib', action='store_true',
@@ -113,6 +113,9 @@ as you would provide for FA TBSS.""")
 
     parser.add_argument('--skeletonMaskDst', type=str,
                         help='skeleton mask distance map')
+                        
+    parser.add_argument('--skeletonMaskPeri', type=str,
+                        help='skeleton mask peripheral')
 
     parser.add_argument('-s', '--space', type=str,
                         help='you may register your template (including ANTs) to another standard space i.e MNI, '
@@ -199,6 +202,7 @@ as you would provide for FA TBSS.""")
         args.skeleton = None
         args.skeletonMask = None
         args.skeletonMaskDst = None
+        args.skeletonMaskPeri = None
 
         # obtain --caselist, --space, --labelMap, --lut, --avg, --SEARCH_RULE_MASK, --SKEL_THRESH from log
         # read the latest log
@@ -280,6 +284,8 @@ as you would provide for FA TBSS.""")
         args.skeletonMask = abspath(args.skeletonMask)
     if args.skeletonMaskDst:
         args.skeletonMaskDst = abspath(args.skeletonMaskDst)
+    if args.skeletonMaskPeri:
+        args.skeletonMaskPeri = abspath(args.skeletonMaskPeri)
     if args.space:
         args.space = abspath(args.space)
     if args.labelMap:
@@ -320,6 +326,7 @@ as you would provide for FA TBSS.""")
         args.templateMask = pjoin(enigmaDir, 'ENIGMA_DTI_FA_mask.nii.gz')
         args.skeleton = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton.nii.gz')
         args.skeletonMask = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask.nii.gz')
+        args.skeletonMaskPeri = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask_periphery.nii.gz')
         args.skeletonMaskDst = pjoin(enigmaDir, 'ENIGMA_DTI_FA_skeleton_mask_dst.nii.gz')
 
         args.lut = pjoin(enigmaDir, 'ENIGMA_look_up_table.txt')
@@ -371,6 +378,11 @@ as you would provide for FA TBSS.""")
         fileBaseName= basename(args.skeletonMaskDst)
         if fileBaseName not in files:
             check_call(f'ln -s {args.skeletonMaskDst}', shell= True)
+            
+    if args.skeletonMaskPeri:
+        fileBaseName= basename(args.skeletonMaskPeri)
+        if fileBaseName not in files:
+            check_call(f'ln -s {args.skeletonMaskPeri}', shell= True)
 
 
 
