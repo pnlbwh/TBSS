@@ -176,6 +176,26 @@ def roi_analysis(imgs, cases, args, roiDir, N_CPU):
 
         for i, c in enumerate(cases):
             df = pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi_avg.csv'))
+                if args.avg:
+        # read one avg_stat_file, obtain headers
+        df_avg= pd.read_csv(pjoin(roiDir, f'{cases[0]}_{args.modality}_roi_avg.csv'))
+        df_avg_comb= pd.DataFrame(columns= np.append(['Cases','Weighted_avg','Core_weighted_avg'], df_avg['Tract'].values))
+
+        for i, c in enumerate(cases):
+            df = pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi_avg.csv'))
+            core=df
+            core=core.drop(core[core['Tract'] =='Peri'].index, inplace = False)
+            core=core.drop(core[core['Tract'] =='AverageFA'].index, inplace = False)
+            # num2str() text formatting is for precision control
+            no_avg=df
+            no_avg=no_avg.drop(no_avg[no_avg['Tract'] =='AverageFA'].index, inplace = False)
+            total_vox=sum(no_avg['nVoxels'].values)
+            no_avg['weight']=no_avg['Average'].values*(no_avg['nVoxels'].values/total_vox)
+            weighted_avg=sum(no_avg['weight'].values)
+            total_core=sum(core['nVoxels'].values)
+            core['weight']=core['Average'].values*(core['nVoxels'].values/total_core)
+            core_weighted_avg=sum(core['weight'].values)
+
             # num2str() text formatting is for precision control
             df_avg_comb.loc[i] = np.append([c,weighted_avg,core_weighted_avg], np.array([num2str(x) for x in df['Average'].values]))
 
