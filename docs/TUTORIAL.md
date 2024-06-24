@@ -397,7 +397,7 @@ Finally, we would like to do analysis on skeletonized data. ROI-based analysis c
 In brief, each `caseid_FA_to_target_skel.nii.gz` is compared against an atlas. The atlas has multiple segments. We calculate
 average diffusivity (FA,MD etc.) of each segment and note them in a csv file: `{modality}/roi/caseid_{modality}_roi*.csv`.
 
-Summary of ROI analysis is saved in `stats/{modality}_combined_roi*csv`. The process is detailed in [ROI analysis](#roi-analysis).
+Summary of ROI analysis is saved in `stats/{modality}_combined_roi*csv`. The process is detailed in [ROI analysis](#1-roi-analysis).
 
 On the other hand, skeletonized 4D data `stats/all{modality}_skeletonized.nii.gz` can be used to do [voxelwise analysis](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide#voxelwise_statistics_on_the_skeletonised_FA_data). 
  
