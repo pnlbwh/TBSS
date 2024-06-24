@@ -281,7 +281,7 @@ Voila! The pipeline will create a study specific template. Default `--modality` 
 
 ## 5. ROI analysis
 
-With all the above, you may provide an atlas and a [space](#-space) of the atlas defining image. Then, [ROI based statistics](#roi-analysis) 
+With all the above, you may provide an atlas and a [space](#ii---space) of the atlas defining image. Then, [ROI based statistics](#roi-analysis) 
 will be calculated.
 
     --labelMap JHU-ICBM-labels-1mm.nii.gz \
