@@ -57,7 +57,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
     df= pd.DataFrame(columns= ['Tract','Average','nVoxels'])
 
     _img_roi= img[_imgNonzero]
-    df.loc[0]= [f'Average{modality}']+ [num2str(x) for x in [_img_roi.mean(), _img_roi.size]]
+    df.loc[0]= [f'Average{modality}']+ [x for x in [_img_roi.mean(), _img_roi.size]]
 
     stat_file= pjoin(roiDir, f'{c}_{modality}_roi.csv')
     avg_stat_file = pjoin(roiDir, f'{c}_{modality}_roi_avg.csv')
@@ -68,7 +68,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
         _img_roi= img[_roi]
 
         if _img_roi.size:
-            df.loc[i+1]= [label2name[intLabel]]+ [num2str(x) for x in [_img_roi.mean(), _img_roi.size]]
+            df.loc[i+1]= [label2name[intLabel]]+ [x for x in [_img_roi.mean(), _img_roi.size]]
         else:
             df.loc[i + 1] = [label2name[intLabel]] + ['0','0']
 
@@ -100,7 +100,7 @@ def subject_stat(imgPath, c, modality, label2name, commonLabels, labelMap, roiDi
                     # since we are averaging over R/L only, len(dm) <= 2
                     if len(dm)==2:
                         # average of R/L
-                        df_avg.loc[row] = [common, num2str(np.average(dm, weights=num if np.sum(num) else [1,1])),
+                        df_avg.loc[row] = [common, np.average(dm, weights=num if np.sum(num) else [1,1]),
                                            str(int(np.sum(num)))]
                         row = row + 1
                         break
@@ -137,7 +137,7 @@ def roi_analysis(imgs, cases, args, roiDir, N_CPU):
     for i, c in enumerate(cases):
         df= pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi.csv'))
         # num2str() text formatting is for precision control
-        df_comb.loc[i]= np.append(c, np.array([num2str(x) for x in df['Average'].values]))
+        df_comb.loc[i]= np.append(c, np.array([x for x in df['Average'].values]))
 
     combined_stat= pjoin(args.statsDir, f'{args.modality}_combined_roi.csv')
     df_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_stat)
@@ -151,7 +151,7 @@ def roi_analysis(imgs, cases, args, roiDir, N_CPU):
         for i, c in enumerate(cases):
             df = pd.read_csv(pjoin(roiDir, f'{c}_{args.modality}_roi_avg.csv'))
             # num2str() text formatting is for precision control
-            df_avg_comb.loc[i] = np.append(c, np.array([num2str(x) for x in df['Average'].values]))
+            df_avg_comb.loc[i] = np.append(c, np.array([x for x in df['Average'].values]))
 
         combined_avg_stat= pjoin(args.statsDir, f'{args.modality}_combined_roi_avg.csv')
         df_avg_comb.sort_index(axis=1).set_index('Cases').to_csv(combined_avg_stat)
