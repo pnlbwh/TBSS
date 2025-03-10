@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If this repository is useful in your research, please cite as below:"
+authors:
+- family-names: "Billah"
+  given-names: "Tashrif"
+- family-names: "Ofer"
+  given-names: "Pasternak"
+- family-names: "Bouix"
+  given-names: "Sylvain"
+title: "Generalized Tract Based Spatial Statistics (TBSS) pipeline"
+version: 0.1.6
+doi: 10.5281/zenodo.2662497
+date-released: 2020-05-28
+url: "https://github.com/pnlbwh/TBSS"
