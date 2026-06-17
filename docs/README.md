@@ -129,8 +129,7 @@ Upon successful installation, you should be able to see the help message
 
 `$ lib/tbss-pnl --help`
     
-See [Useful commands](#-useful-commands) for quick tips about running the pipeline.
-
+See [Useful commands](./TUTORIAL.md#useful-commands) for quick tips about running the pipeline.
 
                  
 # Tests
